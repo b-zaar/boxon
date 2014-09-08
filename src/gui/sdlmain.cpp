@@ -113,11 +113,11 @@ struct private_hwdata {
 
 #define STDOUT_FILE	TEXT("stdout.txt")
 #define STDERR_FILE	TEXT("stderr.txt")
-#define DEFAULT_CONFIG_FILE "/boxOn.conf"
+#define DEFAULT_CONFIG_FILE "/boxon.conf"
 #elif defined(MACOSX)
 #define DEFAULT_CONFIG_FILE "/Library/Preferences/BoxOn Preferences"
 #else /*linux freebsd*/
-#define DEFAULT_CONFIG_FILE "/.dosboxrc"
+#define DEFAULT_CONFIG_FILE "/.boxonrc"
 #endif
 
 #if C_SET_PRIORITY
@@ -222,6 +222,8 @@ struct SDL_Block {
 	Bit8u laltstate;
 	Bit8u raltstate;
 };
+
+void FIRMWARE_Init(void);
 
 static SDL_Block sdl;
 
@@ -1586,10 +1588,10 @@ void Config_Add_SDL() {
 	Prop_multival* Pmulti;
 
 	Pbool = sdl_sec->Add_bool("fullscreen",Property::Changeable::Always,false);
-	Pbool->Set_help("Start dosbox directly in fullscreen. (Press ALT-Enter to go back)");
+	Pbool->Set_help("Start BoxOn directly in fullscreen. (Press ALT-Enter to go back)");
 
 	Pbool = sdl_sec->Add_bool("fulldouble",Property::Changeable::Always,false);
-	Pbool->Set_help("Use double buffering in fullscreen. It can reduce screen flickering, but it can also result in a slow DOSBox.");
+	Pbool->Set_help("Use double buffering in fullscreen. It can reduce screen flickering, but it can also result in a slow BoxOn.");
 
 	Pstring = sdl_sec->Add_string("fullresolution",Property::Changeable::Always,"original");
 	Pstring->Set_help("What resolution to use for fullscreen: original or fixed size (e.g. 1024x768).\n"
@@ -1621,11 +1623,11 @@ void Config_Add_SDL() {
 	Pint->Set_help("Mouse sensitivity.");
 
 	Pbool = sdl_sec->Add_bool("waitonerror",Property::Changeable::Always, true);
-	Pbool->Set_help("Wait before closing the console if dosbox has an error.");
+	Pbool->Set_help("Wait before closing the console if BoxOn has an error.");
 
 	Pmulti = sdl_sec->Add_multi("priority", Property::Changeable::Always, ",");
 	Pmulti->SetValue("higher,normal");
-	Pmulti->Set_help("Priority levels for dosbox. Second entry behind the comma is for when dosbox is not focused/minimized.\n"
+	Pmulti->Set_help("Priority levels for BoxOn. Second entry behind the comma is for when BoxOn is not focused/minimized.\n"
 	                 "  pause is only valid for the second entry.");
 
 	const char* actt[] = { "lowest", "lower", "normal", "higher", "highest", "pause", 0};
@@ -1777,10 +1779,10 @@ static void printconfiglocation() {
 }
 
 static void eraseconfigfile() {
-	FILE* f = fopen("dosbox.conf","r");
+	FILE* f = fopen("boxon.conf","r");
 	if(f) {
 		fclose(f);
-		show_warning("Warning: dosbox.conf exists in current working directory.\nThis will override the configuration file at runtime.\n");
+		show_warning("Warning: boxon.conf exists in current working directory.\nThis will override the configuration file at runtime.\n");
 	}
 	std::string path,file;
 	Cross::GetPlatformConfigDir(path);
@@ -1794,11 +1796,11 @@ static void eraseconfigfile() {
 }
 
 static void erasemapperfile() {
-	FILE* g = fopen("dosbox.conf","r");
+	FILE* g = fopen("boxon.conf","r");
 	if(g) {
 		fclose(g);
-		show_warning("Warning: dosbox.conf exists in current working directory.\nKeymapping might not be properly reset.\n"
-		             "Please reset configuration as well and delete the dosbox.conf.\n");
+		show_warning("Warning: boxon.conf exists in current working directory.\nKeymapping might not be properly reset.\n"
+		             "Please reset configuration as well and delete the boxon.conf.\n");
 	}
 
 	std::string path,file=MAPPERFILE;
@@ -1820,6 +1822,7 @@ int main(int argc, char* argv[]) {
 		control=&myconf;
 		/* Init the configuration system and add default values */
 		Config_Add_SDL();
+		FIRMWARE_Init();
 		DOSBOX_Init();
 
 		std::string editor;
@@ -1854,7 +1857,7 @@ int main(int argc, char* argv[]) {
 #endif  //defined(WIN32) && !(C_DEBUG)
 		if (control->cmdline->FindExist("-version") ||
 		    control->cmdline->FindExist("--version") ) {
-			printf("\nBoxOn version %s, copyright 2014 venomDev.\n\n",VERSION);
+			printf("\nBoxOn version %s, copyright 2014 BoxOn.\n\n",VERSION);
 			printf("BoxOn is based on DOSBox by the DOSBox Team (See AUTHORS file))\n");
 			printf("BoxOn comes with ABSOLUTELY NO WARRANTY.  This is free software,\n");
 			printf("and you are welcome to redistribute it under certain conditions;\n");
@@ -1971,7 +1974,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	// if none found => parse localdir conf
-	if(!control->configfiles.size()) control->ParseConfigFile("dosbox.conf");
+	if(!control->configfiles.size()) control->ParseConfigFile("boxon.conf");
 
 	// if none found => parse userlevel conf
 	if(!control->configfiles.size()) {

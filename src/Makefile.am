@@ -1,6 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/include
 
-SUBDIRS = cpu debug dos fpu gui hardware libs ints misc shell platform
+SUBDIRS = cpu debug dos fpu gui hardware libs ints misc shell firmware platform
 
 bin_PROGRAMS = boxon
 
@@ -13,7 +13,8 @@ endif
 
 boxon_SOURCES = dosbox.cpp $(ico_stuff)
 boxon_LDADD = cpu/libcpu.a debug/libdebug.a dos/libdos.a fpu/libfpu.a  hardware/libhardware.a gui/libgui.a \
-               ints/libints.a misc/libmisc.a shell/libshell.a hardware/serialport/libserial.a libs/gui_tk/libgui_tk.a
+               ints/libints.a misc/libmisc.a shell/libshell.a hardware/serialport/libserial.a libs/gui_tk/libgui_tk.a \
+	       firmware/libfirmware.a firmware/pmio/libfw_pmio.a
 
 EXTRA_DIST = winres.rc dosbox.ico
 
