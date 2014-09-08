@@ -7,8 +7,12 @@ echo "This may take a while ..."
 
 aclocal
 autoheader
-automake --include-deps --add-missing --copy 
+automake --include-deps --add-missing --copy
 autoconf
+autoignore.sh
+mkdir -p build
 
-echo "Now you are ready to run ./configure."
-echo "You can also run  ./configure --help for extra features to enable/disable."
+echo
+echo "Move to the ./build directory."
+echo "Now you are ready to run ../configure."
+echo "You can also run  ../configure --help for extra features to enable/disable."
