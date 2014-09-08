@@ -47,6 +47,8 @@
 Bitu DEBUG_EnableDebugger(void);
 #endif
 
+void FIRMWARE_Boot();
+
 void MSCDEX_SetCDInterface(int intNr, int forceCD);
 static Bitu ZDRIVE_NUM = 25;
 
@@ -594,6 +596,7 @@ public:
 		Bit32u rombytesize_2=0;
 		Bit8u drive = 'A';
 		std::string cart_cmd="";
+		bool firmware = false;
 
 		if(!cmd->GetCount()) {
 			printError();
@@ -633,6 +636,13 @@ public:
 					continue;
 				}
 
+				if((temp_line == "--sys") || (temp_line == "--SYS")){
+					// Boot firmware system
+					firmware = true;
+					i++;
+					continue;
+				}
+
 				WriteOut(MSG_Get("PROGRAM_BOOT_IMAGE_OPEN"), temp_line.c_str());
 				Bit32u rombytesize;
 				FILE *usefile = getFSFile(temp_line.c_str(), &floppysize, &rombytesize);
@@ -659,13 +669,24 @@ public:
 
 		swapInDisks();
 
-		if(imageDiskList[drive-65]==NULL) {
+
+		if(imageDiskList[drive-65]==NULL && !firmware){
 			WriteOut(MSG_Get("PROGRAM_BOOT_UNABLE"), drive);
 			return;
 		}
 
 		bootSector bootarea;
-		imageDiskList[drive-65]->Read_Sector(0,0,1,(Bit8u *)&bootarea);
+
+		if(firmware){
+			// Fake boot loader
+			bootarea.rawdata[0]=0xeb;
+			bootarea.rawdata[1]=0xfe;
+
+		}else{
+			// Read boot sector from image
+			imageDiskList[drive-65]->Read_Sector(0,0,1,(Bit8u *)&bootarea);
+		}
+
 		if ((bootarea.rawdata[0]==0x50) && (bootarea.rawdata[1]==0x43) && (bootarea.rawdata[2]==0x6a) && (bootarea.rawdata[3]==0x72)) {
 			if (machine!=MCH_PCJR) WriteOut(MSG_Get("PROGRAM_BOOT_CART_WO_PCJR"));
 			else {
@@ -821,7 +842,9 @@ public:
 			disable_umb_ems_xms();
 			void RemoveEMSPageFrame(void);
 			RemoveEMSPageFrame();
-			WriteOut(MSG_Get("PROGRAM_BOOT_BOOT"), drive);
+			if(!firmware){
+				WriteOut(MSG_Get("PROGRAM_BOOT_BOOT"), drive);
+			}
 			for(i=0;i<512;i++) real_writeb(0, 0x7c00 + i, bootarea.rawdata[i]);
 
 			/* revector some dos-allocated interrupts */
@@ -841,6 +864,11 @@ public:
 			reg_eax = 0;
 			reg_edx = 0; //Head 0 drive 0
 			reg_ebx= 0x7c00; //Real code probably uses bx to load the image
+
+			// Load firmware
+			if(firmware){
+				FIRMWARE_Boot();
+			}
 		}
 	}
 };

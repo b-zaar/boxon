@@ -26,6 +26,7 @@ static FIRMWARE *firmware;
 
 void FIRMWARE_Config(Section *config);
 char **initFirmwareList();
+FirmwareSystem *findFirmware(const char *name);
 
 /*
  * Initialize config file settings
@@ -69,15 +70,11 @@ void FIRMWARE_Init(void)
 }
 
 /*
- * Configure the firmware system
+ * Configure the firmware module
  */
 void FIRMWARE_Config(Section *config)
 {
 	firmware = new FIRMWARE(config);
-
-	LOG_MSG("Firmware system: %s", firmware->propString("system"));
-	LOG_MSG("  System config: %s", firmware->propString("sysrc"));
-	LOG_MSG("    Boot config: %s", firmware->propString("bootrc"));
 }
 
 /*
@@ -85,7 +82,14 @@ void FIRMWARE_Config(Section *config)
  */
 void FIRMWARE_Boot()
 {
+	FirmwareSystem *fwSys;
 
+	if((fwSys = findFirmware(firmware->propString("system"))) == NULL){
+		E_Exit("Firmware: Could not locate firmware system: %s", firmware->propString("system"));
+	}
+
+	fwSys->init(firmware->propString("sysrc"));
+	fwSys->boot(firmware->propString("bootrc"));
 }
 
 /*
@@ -101,7 +105,7 @@ std::string FirmwareSystem::name(void)
  */
 void FirmwareSystem::boot(const char *bootrc)
 {
-
+	(*Boot)(bootrc);
 }
 
 /*
@@ -109,7 +113,7 @@ void FirmwareSystem::boot(const char *bootrc)
  */
 void FirmwareSystem::init(const char *sysrc)
 {
-
+	(*Init)(sysrc);
 }
 
 /*

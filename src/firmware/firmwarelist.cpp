@@ -63,3 +63,21 @@ void addFirmware(std::string name, void (*init)(const char *), void (*boot)(cons
 	fw = new FirmwareSystem(name, init, boot);
 	fwList.push_back(fw);
 }
+
+/*
+ * Find the firmware in the support list
+ */
+FirmwareSystem *findFirmware(const char *name)
+{
+	std::list<FirmwareSystem *>::iterator it;
+	FirmwareSystem *fwSys;
+
+	fwSys = NULL;
+	for(it = fwList.begin(); it != fwList.end(); it++){
+		if((*it)->name() == name){
+			fwSys = *it;
+			break;
+		}
+	}
+	return fwSys;
+}
