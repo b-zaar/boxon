@@ -2137,7 +2137,7 @@ static void MAPPER_SaveBinds(void) {
 		fprintf(savefile,"\n");
 	}
 	fclose(savefile);
-	change_action_text("Mapper file saved.",CLR_WHITE);
+	change_action_text("Mapper file desc.",CLR_WHITE);
 }
 
 static bool MAPPER_LoadBinds(void) {

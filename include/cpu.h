@@ -21,7 +21,7 @@
 #define DOSBOX_CPU_H
 
 #ifndef DOSBOX_DOSBOX_H
-#include "dosbox.h" 
+#include "dosbox.h"
 #endif
 #ifndef DOSBOX_REGS_H
 #include "regs.h"
@@ -222,6 +222,13 @@ void CPU_SetFlags(Bitu word,Bitu mask);
 #define DESC_CODE_R_C_A				0x1e
 #define DESC_CODE_R_C_NA			0x1f
 
+/* Descriptor Extra flags */
+#define DESC_P					0x00008000
+#define DESC_AVL				0x00100000
+#define	DESC_R					0x00200000
+#define	DESC_BIG				0x00400000
+#define DESC_G					0x00800000
+
 #ifdef _MSC_VER
 #pragma pack (1)
 #endif
@@ -278,7 +285,7 @@ struct G_Descriptor {
 #endif
 } GCC_ATTRIBUTE(packed);
 
-struct TSS_16 {	
+struct TSS_16 {
     Bit16u back;                 /* Back link to other task */
     Bit16u sp0;				     /* The CK stack pointer */
     Bit16u ss0;					 /* The CK stack selector */
@@ -297,7 +304,7 @@ struct TSS_16 {
     Bit16u ldt;                  /* The local descriptor table */
 } GCC_ATTRIBUTE(packed);
 
-struct TSS_32 {	
+struct TSS_32 {
     Bit32u back;                /* Back link to other task */
 	Bit32u esp0;		         /* The CK stack pointer */
     Bit32u ss0;					 /* The CK stack selector */
@@ -322,61 +329,126 @@ struct TSS_32 {
 #ifdef _MSC_VER
 #pragma pack()
 #endif
-class Descriptor
-{
+class Descriptor{
 public:
-	Descriptor() { saved.fill[0]=saved.fill[1]=0; }
-
-	void Load(PhysPt address);
-	void Save(PhysPt address);
-
-	PhysPt GetBase (void) { 
-		return (saved.seg.base_24_31<<24) | (saved.seg.base_16_23<<16) | saved.seg.base_0_15; 
-	}
-	Bitu GetLimit (void) {
-		Bitu limit = (saved.seg.limit_16_19<<16) | saved.seg.limit_0_15;
-		if (saved.seg.g)	return (limit<<12) | 0xFFF;
-		return limit;
-	}
-	Bitu GetOffset(void) {
-		return (saved.gate.offset_16_31 << 16) | saved.gate.offset_0_15;
-	}
-	Bitu GetSelector(void) {
-		return saved.gate.selector;
-	}
-	Bitu Type(void) {
-		return saved.seg.type;
-	}
-	Bitu Conforming(void) {
-		return saved.seg.type & 8;
-	}
-	Bitu DPL(void) {
-		return saved.seg.dpl;
-	}
-	Bitu Big(void) {
-		return saved.seg.big;
-	}
-public:
-	union {
+	union{
 		S_Descriptor seg;
 		G_Descriptor gate;
 		Bit32u fill[2];
-	} saved;
+	}desc;
+
+	Descriptor()
+	{
+		desc.fill[0] = desc.fill[1] = 0;
+	}
+
+	Descriptor(PhysPt base, Bitu limit, Bitu type, Bitu dpl);
+
+	void Load(PhysPt address);
+
+	void Save(PhysPt address);
+
+	PhysPt GetBase(void)
+	{
+		return (desc.seg.base_24_31 << 24) | (desc.seg.base_16_23 << 16) |
+			desc.seg.base_0_15;
+	}
+
+	void SetBase(PhysPt base);
+
+	Bitu GetLimit(void)
+	{
+		Bitu limit = (desc.seg.limit_16_19 << 16) | desc.seg.limit_0_15;
+		if(desc.seg.g){
+			return (limit << 12) | 0xFFF;
+		}
+		return limit;
+	}
+
+	void SetLimit(Bitu limit);
+
+	Bitu GetOffset(void) {
+		return (desc.gate.offset_16_31 << 16) | desc.gate.offset_0_15;
+	}
+
+	Bitu GetSelector(void) {
+		return desc.gate.selector;
+	}
+
+	Bitu Type(void) {
+		return desc.seg.type;
+	}
+
+	void Type(Bitu type) {
+		desc.seg.type = type;
+	}
+
+	Bitu Conforming(void) {
+		return desc.seg.type & 8;
+	}
+
+	Bitu DPL(void) {
+		return desc.seg.dpl;
+	}
+
+	void DPL(Bitu dpl) {
+		desc.seg.dpl = dpl;
+	}
+
+	Bitu Big(void) {
+		return desc.seg.big;
+	}
+
+	Bitu Big(Bitu big) {
+		desc.seg.big = big;
+	}
 };
 
 class DescriptorTable {
 public:
-	PhysPt	GetBase			(void)			{ return table_base;	}
-	Bitu	GetLimit		(void)			{ return table_limit;	}
-	void	SetBase			(PhysPt _base)	{ table_base = _base;	}
-	void	SetLimit		(Bitu _limit)	{ table_limit= _limit;	}
+	DescriptorTable() {}
+	DescriptorTable(PhysPt base, Bitu limit): table_base(base), table_limit(limit) {}
 
-	bool GetDescriptor	(Bitu selector, Descriptor& desc) {
-		selector&=~7;
-		if (selector>=table_limit) return false;
-		desc.Load(table_base+(selector));
+	PhysPt GetBase(void)
+	{
+		return table_base;
+	}
+
+	Bitu GetLimit(void)
+	{
+		return table_limit;
+	}
+
+	void SetBase(PhysPt base)
+	{
+		table_base = base;
+	}
+
+	void SetLimit(Bitu limit)
+	{
+		table_limit= limit;
+	}
+
+	bool GetDescriptor(Bitu selector, Descriptor &desc)
+	{
+		selector &= ~7;
+		if(selector >= table_limit){
+			return false;
+		}
+		desc.Load(table_base + (selector));
 		return true;
 	}
+
+	bool SetDescriptor(Bitu selector, Descriptor &desc)
+	{
+		selector &= ~7;
+		if(selector >= table_limit){
+			return false;
+		}
+		desc.Save(table_base + (selector));
+		return true;
+	}
+
 protected:
 	PhysPt table_base;
 	Bitu table_limit;
@@ -407,7 +479,7 @@ public:
 			desc.Save(table_base+address);
 			return true;
 		}
-	} 
+	}
 	Bitu SLDT(void)	{
 		return ldt_value;
 	}
@@ -421,7 +493,7 @@ public:
 		Descriptor desc;
 		if (!GetDescriptor(value,desc)) return !CPU_PrepareException(EXCEPTION_GP,value);
 		if (desc.Type()!=DESC_LDT) return !CPU_PrepareException(EXCEPTION_GP,value);
-		if (!desc.saved.seg.p) return !CPU_PrepareException(EXCEPTION_NP,value);
+		if (!desc.desc.seg.p) return !CPU_PrepareException(EXCEPTION_NP,value);
 		ldt_base=desc.GetBase();
 		ldt_limit=desc.GetLimit();
 		ldt_value=value;
@@ -436,14 +508,14 @@ private:
 class TSS_Descriptor : public Descriptor {
 public:
 	Bitu IsBusy(void) {
-		return saved.seg.type & 2;
+		return desc.seg.type & 2;
 	}
 	Bitu Is386(void) {
-		return saved.seg.type & 8;
+		return desc.seg.type & 8;
 	}
 	void SetBusy(bool busy) {
-		if (busy) saved.seg.type|=2;
-		else saved.seg.type&=~2;
+		if (busy) desc.seg.type|=2;
+		else desc.seg.type&=~2;
 	}
 };
 

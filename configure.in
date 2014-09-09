@@ -521,6 +521,7 @@ src/misc/Makefile
 src/shell/Makefile
 src/firmware/Makefile
 src/firmware/pmio/Makefile
+src/box32/Makefile
 src/platform/Makefile
 src/platform/visualc/Makefile
 visualc_net/Makefile
