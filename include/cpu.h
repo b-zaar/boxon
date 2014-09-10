@@ -227,6 +227,8 @@ void CPU_SetFlags(Bitu word,Bitu mask);
 #define DESC_AVL				0x00100000
 #define	DESC_R					0x00200000
 #define	DESC_BIG				0x00400000
+#define	DESC_D16				0x00000000
+#define	DESC_D32				0x00400000
 #define DESC_G					0x00800000
 
 #ifdef _MSC_VER
