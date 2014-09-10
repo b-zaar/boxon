@@ -16,6 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <cstring>
 #include <fstream>
 #include "boxon.h"
 
@@ -35,7 +36,7 @@ bool loadMod(std::string &modName);
 static int loadAddr;
 static multiboot_header *mbHeader = NULL;
 static multiboot_mod_list *modList[MOD_LIMIT];
-static int modCnt;
+static int modCnt = 0;
 
 void createInfoblock();
 
@@ -63,7 +64,7 @@ void SMB_Boot(const char *rc)
 			break;
 		}
 		modCnt++;
-		LOG_MSG("SMB_boot loaded: %s", modName.c_str());
+		LOG_MSG("SMB_boot loaded [@0x%08x]: %s", modList[modCnt - 1]->mod_start, modName.c_str());
 	}
 	rcFile.close();
 
@@ -140,8 +141,9 @@ int checkMultiboot(char *mbImage)
 		LOG_MSG("  Load Address: 0x%08x", loadAddr);
 		LOG_MSG("   Image Start: 0x%08x", imgStart);
 		LOG_MSG("    Image Size: 0x%08x", imgSize);
+		LOG_MSG("    Entry addr: 0x%08x", mb->entry_addr);
 		LOG_MSG("     BSS Start: 0x%08x", bssStart);
-		LOG_MSG("      BSS Size: 0x%08x", bssStart);
+		LOG_MSG("      BSS Size: 0x%08x", bssSize);
 
 
 	// Use ELF address fields
@@ -154,7 +156,10 @@ int checkMultiboot(char *mbImage)
 		mem_writeb(bssStart + i, 0);
 	}
 
-	mbHeader = mb;
+	// Save multiboot header
+	mbHeader = new multiboot_header;
+	memcpy(mbHeader, mb, sizeof(multiboot_header));
+
 	return imgStart;
 }
 
@@ -180,11 +185,8 @@ bool loadMod(std::string &modName)
 	int imgStart = checkMultiboot(rdBuf);
 	if(imgStart){
 		// Reset image start
-		LOG_MSG("loadMod: reset image start to 0x%08x", imgStart);
-		LOG_MSG("Before: 0x%08X, 0x%08X", *(uint32_t *)rdBuf, *(uint32_t *)(rdBuf + 4));
 		modFile.seekg(imgStart);
 		modFile.readsome(rdBuf, MEM_SIZE);
-		LOG_MSG(" After: 0x%08X, 0x%08X", *(uint32_t *)rdBuf, *(uint32_t *)(rdBuf + 4));
 	}
 
 	// Load module
@@ -201,9 +203,10 @@ bool loadMod(std::string &modName)
 
 	// Align load address to next page
 	modBlock->mod_end = loadAddr;
-	loadAddr = (loadAddr + 0xfff) & 0x1000;
+	loadAddr = (loadAddr + 0xfff) & 0xfffff000;
 
 	delete[] rdBuf;
+	return true;
 }
 
 // BIOS custom service
@@ -226,7 +229,7 @@ void createInfoblock()
 	// Set modules list
 	if(modCnt > 1){
 		mbInfo->flags |= MULTIBOOT_INFO_MODS;
-		mbInfo->mods_count = modCnt;
+		mbInfo->mods_count = modCnt - 1;
 		mbInfo->mods_addr = freeMem;
 
 		for(i = 1; i < modCnt; i++){
