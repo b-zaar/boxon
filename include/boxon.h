@@ -16,11 +16,21 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef	_BOXON_H
-#define	_BOXON_H
+#ifndef _BOXON_H
+#define _BOXON_H
+
+#include <cstdarg>
 
 #include "cpu.h"
 #include "inout.h"
+
+#define format(str, size, fmt, ...)\
+{\
+	va_list vl;\
+	va_start(vl, fmt);\
+	vsnprintf(str, size, fmt, vl);\
+	va_end(vl);\
+}
 
 void boxEnablePmode(DescriptorTable &gdt, DescriptorTable &idt);
 

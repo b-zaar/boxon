@@ -22,6 +22,9 @@
 
 #include "bios.h"
 #include "multiboot.h"
+#include "../ints/int10.h"
+
+#define BUF_SZ	1024
 
 #define MEM_SIZE	0x2000
 #define MB_INFO_BASE	0x0008000
@@ -39,6 +42,7 @@ static multiboot_mod_list *modList[MOD_LIMIT];
 static int modCnt = 0;
 
 void createInfoblock();
+void writeOut(const char *str, ...);
 
 /*
  * Simple Multiboot boot loader
@@ -48,10 +52,13 @@ void SMB_Boot(const char *rc)
 	std::ifstream rcFile;
 	std::string modName;
 
+	INT10_SetVideoMode(0x03);
+	writeOut("BoxOn Simple Boot Loader\n\n");
+
 	// Load the rc file
 	rcFile.open(rc);
 	if(!rcFile.is_open()){
-		LOG_MSG("SMB_Boot: could not open file - %s", rc);
+		writeOut("Error opening configuration file: %s\n", rc);
 		return;
 	}
 
@@ -59,12 +66,25 @@ void SMB_Boot(const char *rc)
 	loadAddr = 0x100000;
 	modCnt = 0;
 	while(getline(rcFile, modName) && modCnt < MOD_LIMIT){
+
+		// Error loading module
 		if(!loadMod(modName)){
-			LOG_MSG("SMB_Boot error loading: %s", modName.c_str());
+			writeOut("Error loading module: %s\n", modName.c_str());
 			break;
 		}
+
+		// Not a multiboot kernel
+		if(modCnt == 0 && !mbHeader){
+			writeOut("First module was not a supported Multiboot kernel\n");
+			break;
+		}
+
+		// Show module info
 		modCnt++;
-		LOG_MSG("SMB_boot loaded [@0x%08x]: %s", modList[modCnt - 1]->mod_start, modName.c_str());
+		std::string name = modName.length() <= 35 ? modName :
+			"..." + modName.substr(modName.length() - 32);
+		writeOut("Start: 0x%08x  End: 0x%08x  Module: %-35s\n", modList[modCnt - 1]->mod_start,
+			modList[modCnt - 1]->mod_end, name.c_str());
 	}
 	rcFile.close();
 
@@ -75,6 +95,7 @@ void SMB_Boot(const char *rc)
 		reg_ebx = MB_INFO_BASE;
 		reg_esp = MB_INFO_BASE;
 		reg_eip = mbHeader->entry_addr;
+		writeOut("\nStarting kernel...\n\n");
 	}
 }
 
@@ -122,7 +143,8 @@ int checkMultiboot(char *mbImage)
 
 	// Check for unsupported required flags
 	if((mb->flags & MULTIBOOT_FLAGS_REQUIRED) & ~MULTIBOOT_FLAGS_SUPPORTED){
-		LOG_MSG("SMB_Boot some required Multiboot flags are not supported %08X:%08X:%08X", mb->flags & 0xffff, ~MULTIBOOT_FLAGS_SUPPORTED,(mb->flags & 0xffff) & ~MULTIBOOT_FLAGS_SUPPORTED);
+		writeOut("Some required Multiboot flags are not supported\n");
+		return 0;
 	}
 
 	// Valid address fields
@@ -148,7 +170,8 @@ int checkMultiboot(char *mbImage)
 
 	// Use ELF address fields
 	}else{
-		LOG_MSG("SMB_Boot: ELF header not supported");
+		writeOut("ELF header not supported\n");
+		return 0;
 	}
 
 	// Clear bss
@@ -212,6 +235,9 @@ bool loadMod(std::string &modName)
 // BIOS custom service
 Bit16u extendedMemSize();
 
+/*
+ * Create a Multiboot information block
+ */
 void createInfoblock()
 {
 	int i, freeMem;
@@ -246,4 +272,34 @@ void createInfoblock()
 	for(i = 0; i < sizeof(multiboot_info); i++){
 		mem_writeb(MB_INFO_BASE + i, *(info + i));
 	}
+}
+
+/*
+ * Write a character in Teletype mode
+ */
+void putChar(const char c)
+{
+	INT10_TeletypeOutput(c, 0x07);
+}
+
+/*
+ * Write a string with format information to the console
+ */
+void writeOut(const char *str, ...)
+{
+	char *c, *s;
+
+	c = s = new char[BUF_SZ];
+	format(s, BUF_SZ, str);
+	for(; *c; c++){
+		switch(*c){
+		case '\n':
+			putChar('\r');
+			putChar('\n');
+			break;
+		default:
+			putChar(*c);
+		}
+	}
+	delete[] s;
 }
