@@ -16,10 +16,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include "boxon.h"
+#include "callback.h"
 #include "control.h"
 #include "cross.h"
-#include "dosbox.h"
-#include "setup.h"
 #include "firmware.h"
 
 static FIRMWARE *firmware;
@@ -69,6 +69,21 @@ void FIRMWARE_Init(void)
 	Pstring->Set_help("Path to the boot configuration file.");
 }
 
+static Bitu FIRMWARE_Services(void)
+{
+	switch(reg_eax){
+
+	case Shutdown:
+		fwShutdown(reg_ebx);
+		break;
+
+	default:
+		LOG_MSG("Firmware unknown call: 0x%08x", reg_eax);
+		reg_eax = -1;
+	}
+	return CBRET_NONE;
+}
+
 /*
  * Configure the firmware module
  */
@@ -77,17 +92,42 @@ void FIRMWARE_Config(Section *config)
 	firmware = new FIRMWARE(config);
 }
 
+void createFirmwareInfo(Bit32u cbAddr)
+{
+	FirmwareInfo *fib;
+
+	fib = new FirmwareInfo();
+	fib->magic[0] = FIRMWARE_MAGIC_0;
+	fib->magic[1] = FIRMWARE_MAGIC_1;
+	fib->version = 0x00000001;
+	fib->entryAddr = cbAddr;
+	fib->checksum = 0 - (fib->magic[0] + fib->magic[1] + fib->version + fib->entryAddr);
+
+	boxMemcpy(FIRMWARE_INFO_BASE, fib, sizeof(FirmwareInfo));
+
+	delete[] fib;
+}
+
 /*
  * Boot the system
  */
 void FIRMWARE_Boot()
 {
+	int cbNo;
+	Bit32u cbAddr;
 	FirmwareSystem *fwSys;
+
+	// Create a callback service
+	cbNo = CALLBACK_Allocate();
+	CALLBACK_Setup(cbNo, FIRMWARE_Services, CB_RETN, "BoxOnLib service handler");
+	cbAddr = CALLBACK_GetAddr(cbNo);
+	createFirmwareInfo(cbAddr);
 
 	if((fwSys = findFirmware(firmware->propString("system"))) == NULL){
 		E_Exit("Firmware: Could not locate firmware system: %s", firmware->propString("system"));
 	}
 
+	reg_esi = FIRMWARE_INFO_BASE;
 	fwSys->init(firmware->propString("sysrc"));
 	fwSys->boot(firmware->propString("bootrc"));
 }

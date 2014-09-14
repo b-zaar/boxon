@@ -16,7 +16,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "setup.h"
+#include "boxon.h"
 #include "firmware.h"
 
 void addFirmware(std::string name, void (*init)(const char *), void (*boot)(const char *));

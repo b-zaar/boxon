@@ -22,7 +22,7 @@
 
 #ifndef DOSBOX_MEM_H
 #include "mem.h"
-#endif 
+#endif
 
 typedef Bitu (*CallBack_Handler)(void);
 extern CallBack_Handler CallBack_Handlers[];
@@ -37,7 +37,7 @@ enum { CB_RETN,CB_RETF,CB_RETF8,CB_IRET,CB_IRETD,CB_IRET_STI,CB_IRET_EOI_PIC1,
 #define CB_SEG		0xF000
 #define CB_SOFFSET	0x1000
 
-enum {	
+enum {
 	CBRET_NONE=0,CBRET_STOP=1
 };
 
@@ -53,6 +53,8 @@ static INLINE PhysPt CALLBACK_PhysPointer(Bitu callback) {
 static INLINE PhysPt CALLBACK_GetBase(void) {
 	return (CB_SEG << 4) + CB_SOFFSET;
 }
+
+#define	CALLBACK_GetAddr(cb)	CALLBACK_PhysPointer(cb)
 
 Bitu CALLBACK_Allocate();
 
@@ -80,7 +82,7 @@ private:
 	bool installed;
 	Bitu m_callback;
 	enum {NONE,SETUP,SETUPAT} m_type;
-    struct {	
+    struct {
 		RealPt old_vector;
 		Bit8u interrupt;
 		bool installed;

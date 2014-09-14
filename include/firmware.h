@@ -16,10 +16,30 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-/* $Id$ */
-
 #ifndef	_FIRMWARE_H
 #define	_FIRMWARE_H
+
+#include "setup.h"
+
+#define FIRMWARE_MAGIC_0	MC_CONST('I', 'O', 'S', 'y')
+#define FIRMWARE_MAGIC_1	MC_CONST('s', '3', '2', 0)
+
+#define FIRMWARE_INFO_BASE	0x88000
+
+#define	MSG_MAX_LEN		1024
+
+
+enum FirmwareService {
+	Shutdown
+};
+
+struct FirmwareInfo {
+	Bit32u magic[2];
+	Bit32u version;
+	Bit32u entryAddr;
+	Bit32u checksum;
+	Bit32u extensionCnt;
+};
 
 // Firmware DOSBox Module
 class FIRMWARE:public Module_base {
@@ -44,5 +64,7 @@ private:
 	void (*Boot)(const char *);
 	void (*Init)(const char *);
 };
+
+void fwShutdown(int status);
 
 #endif		// _FIRMWARE_H
