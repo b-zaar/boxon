@@ -14,7 +14,7 @@ endif
 boxon_SOURCES = dosbox.cpp $(ico_stuff)
 boxon_LDADD = cpu/libcpu.a debug/libdebug.a dos/libdos.a fpu/libfpu.a  hardware/libhardware.a gui/libgui.a \
                ints/libints.a misc/libmisc.a shell/libshell.a hardware/serialport/libserial.a libs/gui_tk/libgui_tk.a \
-	       firmware/libfirmware.a firmware/pmio/libfw_pmio.a\
+	       firmware/libfirmware.a firmware/boxonio/libfw_boxonio.a \
 	       box32/libbox32.a
 
 EXTRA_DIST = winres.rc dosbox.ico

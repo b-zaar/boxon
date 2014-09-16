@@ -5,4 +5,4 @@ EXTRA_DIST =
 libfirmware_a_SOURCES = firmware.cpp firmwarelist.cpp fwservices.cpp\
 			smboot.cpp
 
-SUBDIRS = pmio
+SUBDIRS = boxonio

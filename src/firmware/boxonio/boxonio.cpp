@@ -20,28 +20,22 @@
 #include "callback.h"
 
 #define GDT_BASE	0x1000
-#define	GDT_LIMIT	0x0fff
+#define GDT_LIMIT	0x0fff
 #define IDT_BASE	0x0800
 #define IDT_LIMIT	0x07ff
 
-/*
- * PMIO service handler
- */
-static Bitu PMIO_Services(void)
-{
-	LOG_MSG("PMIO Service called");
-}
+static Bitu bxnIOSys(void);
 
 /*
- * Protected Mode I/O Layer
+ * Initialise the BoxOn I/O System
  */
-void PMIO_Init(const char *rc)
+void boxonIOInit(const char *rc)
 {
 	int cbNo;
 
 	// Create a callback service
 	cbNo = CALLBACK_Allocate();
-	CALLBACK_Setup(cbNo, PMIO_Services, CB_RETF, "PMIO service handler");
+	CALLBACK_Setup(cbNo, bxnIOSys, CB_RETN, "BoxOnIO service handler");
 
 	// Enable protected mode
 	DescriptorTable gdt(GDT_BASE, GDT_LIMIT);
@@ -50,3 +44,12 @@ void PMIO_Init(const char *rc)
 
 	LOG_MSG("PMIO enabled");
 }
+
+/*
+ * BoxOn IO System service handler
+ */
+static Bitu bxnIOSys(void)
+{
+	LOG_MSG("BoxOnIO: Unknown service 0x%08x", reg_eax);
+}
+
