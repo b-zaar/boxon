@@ -17,32 +17,51 @@
  */
 
 #include "boxon.h"
+#include "boxonio.h"
 #include "callback.h"
-
-#define GDT_BASE	0x1000
-#define GDT_LIMIT	0x0fff
-#define IDT_BASE	0x0800
-#define IDT_LIMIT	0x07ff
+#include "firmware.h"
 
 static Bitu bxnIOSys(void);
+static void createInfoBlock(Bit32u cbAddr);
 
 /*
- * Initialise the BoxOn I/O System
+ * Initialize the BoxOn I/O System
  */
 void boxonIOInit(const char *rc)
 {
 	int cbNo;
+	Bit32u cbAddr;
 
 	// Create a callback service
 	cbNo = CALLBACK_Allocate();
 	CALLBACK_Setup(cbNo, bxnIOSys, CB_RETN, "BoxOnIO service handler");
+	cbAddr = CALLBACK_GetAddr(cbNo);
+	createInfoBlock(cbAddr);
 
 	// Enable protected mode
 	DescriptorTable gdt(GDT_BASE, GDT_LIMIT);
 	DescriptorTable idt(IDT_BASE, IDT_LIMIT);
 	boxEnablePmode(gdt, idt);
+}
 
-	LOG_MSG("PMIO enabled");
+/*
+ * Set the BoxOn IO System info block
+ */
+static void createInfoBlock(Bit32u cbAddr)
+{
+	BoxOnInfoBlock *ib;
+
+	ib = new BoxOnInfoBlock();
+	ib->magic[0] = BOXONIO_MAGIC_0;
+	ib->magic[1] = BOXONIO_MAGIC_1;
+	ib->version = BOXONIO_VERSION;
+	ib->entryAddr = cbAddr;
+	ib->checksum = 0 - (ib->magic[0] + ib->magic[1] + ib->version + ib->entryAddr);
+
+	boxMemcpy(FIRMWARE_INFO_BASE, ib, sizeof(BoxOnInfoBlock));
+	reg_esi = FIRMWARE_INFO_BASE;
+
+	delete[] ib;
 }
 
 /*
@@ -50,6 +69,35 @@ void boxonIOInit(const char *rc)
  */
 static Bitu bxnIOSys(void)
 {
-	LOG_MSG("BoxOnIO: Unknown service 0x%08x", reg_eax);
+	// Clear errors
+	errno = 0;
+	CALLBACK_SCF(false);
+
+	// Find service
+	switch(reg_eax){
+
+	case BXN_OPEN:
+		LOG_MSG("BoxOnIO: Open 0x%08x 0x%08x 0x%08x 0%08x", reg_eax, reg_ebx, reg_ecx, reg_edx);
+		break;
+
+	case BXN_CLOSE:
+		LOG_MSG("BoxOnIO: Close 0x%08x 0x%08x 0x%08x 0%08x", reg_eax, reg_ebx, reg_ecx, reg_edx);
+		break;
+
+	case BXN_READ:
+		LOG_MSG("BoxOnIO: Read 0x%08x 0x%08x 0x%08x 0%08x", reg_eax, reg_ebx, reg_ecx, reg_edx);
+		break;
+
+	case BXN_WRITE:
+		LOG_MSG("BoxOnIO: Write 0x%08x 0x%08x 0x%08x 0%08x", reg_eax, reg_ebx, reg_ecx, reg_edx);
+		break;
+
+	default:{
+		LOG_MSG("BoxOnIO: Unknown service 0x%08x", reg_eax);
+		reg_eax = -ENOSYS;
+		CALLBACK_SCF(true);
+	}};
+
+	return CBRET_NONE;
 }
 
