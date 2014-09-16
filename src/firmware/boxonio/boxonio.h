@@ -14,37 +14,37 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	_FIRMWARE_H
-#define	_FIRMWARE_H
+#ifndef	_BOXONIO_H
+#define	_BOXONIO_H
 
-#include "setup.h"
+#define BOXONIO_VERSION	0x00000001
+#define BOXONIO_MAGIC_0	MC_CONST('B', 'o', 'x', 'O')
+#define BOXONIO_MAGIC_1	MC_CONST('n', 'I', 'O', 0)
 
-#define FIRMWARE_INFO_BASE	0x88000
+#define GDT_BASE	0x1000
+#define GDT_LIMIT	0x0fff
+#define IDT_BASE	0x0800
+#define IDT_LIMIT	0x07ff
 
-#define	MSG_MAX_LEN		1024
-
-// Firmware module
-class FIRMWARE:public Module_base {
-public:
-	FIRMWARE(Section *sec): Module_base(sec) {};
-	const char *propString(const char *prop);
-
-private:
+/*
+ * BoxOn I/O System services
+ */
+enum BoxOnIOServices {
+	BXN_OPEN,
+	BXN_CLOSE,
+	BXN_READ,
+	BXN_WRITE
 };
 
-// Firmware System control
-class FirmwareSystem {
-public:
-	FirmwareSystem(std::string name, void (*init)(const char *), void (*boot)(const char *)):
-		Name(name), Init(init), Boot(boot) {};
-	void init(const char *);
-	void boot(const char *);
-	std::string name();
-
-private:
-	std::string Name;
-	void (*Boot)(const char *);
-	void (*Init)(const char *);
+/*
+ * BoxOn I/O information block
+ */
+struct BoxOnInfoBlock {
+	Bit32u magic[2];
+	Bit32u version;
+	Bit32u entryAddr;
+	Bit32u checksum;
+	Bit32u extensionCnt;
 };
 
-#endif		// _FIRMWARE_H
+#endif		// _BXNIOSYS_H
