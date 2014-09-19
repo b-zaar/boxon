@@ -19,11 +19,18 @@
 
 #include <cstddef>
 #include <cstdarg>
+#include "stdint.h"
 
 #include "config.h"
 #include "cpu.h"
 #include "inout.h"
 #include "regs.h"
+
+#define error(err) \
+{ \
+	errno = err; \
+	goto Error; \
+}
 
 // Define a  multi-character constant
 #define MC_CONST(a, b, c, d)	((d << 24) | (c << 16) | (b << 8) | (a))

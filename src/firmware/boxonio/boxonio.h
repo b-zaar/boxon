@@ -30,10 +30,14 @@
  * BoxOn I/O System services
  */
 enum BoxOnIOServices {
-	BXN_OPEN,
-	BXN_CLOSE,
+	BXN_OPEN = 0,
+	BXN_INIT = 0,
+	BXN_CLOSE = 1,
+	BXN_EXIT = 1,
 	BXN_READ,
-	BXN_WRITE
+	BXN_WRITE,
+	BXN_IOCTL = 0x100000,
+	BXN_IO_RESERVED = 0x80000000
 };
 
 /*

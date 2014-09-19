@@ -17,7 +17,10 @@
 #include "boxon.h"
 #include "boxonio.h"
 #include "callback.h"
+#include "bxndevice.h"
 #include "firmware.h"
+
+void bxnDeviceInit(void);
 
 static Bitu bxnIOSys(void);
 static void createInfoBlock(Bit32u cbAddr);
@@ -40,6 +43,8 @@ void boxonIOInit(const char *rc)
 	DescriptorTable gdt(GDT_BASE, GDT_LIMIT);
 	DescriptorTable idt(IDT_BASE, IDT_LIMIT);
 	boxEnablePmode(gdt, idt);
+
+	bxnDeviceInit();
 }
 
 /*
@@ -67,35 +72,66 @@ static void createInfoBlock(Bit32u cbAddr)
  */
 static Bitu bxnIOSys(void)
 {
+	DeviceControl *dev;
+
 	// Clear errors
 	errno = 0;
 	CALLBACK_SCF(false);
+
+	// Find device
+	dev = getDeviceControl(reg_ebx);
+	if(errno){
+		error(errno);
+	}
 
 	// Find service
 	switch(reg_eax){
 
 	case BXN_OPEN:
-		LOG_MSG("BoxOnIO: Open 0x%08x 0x%08x 0x%08x 0%08x", reg_eax, reg_ebx, reg_ecx, reg_edx);
+		dev->open(reg_eax, reg_ebx, reg_ecx, reg_edx);
+		if(errno){
+			error(errno);
+		}
 		break;
 
 	case BXN_CLOSE:
-		LOG_MSG("BoxOnIO: Close 0x%08x 0x%08x 0x%08x 0%08x", reg_eax, reg_ebx, reg_ecx, reg_edx);
+		dev->close(reg_eax, reg_ebx, reg_ecx, reg_edx);
+		if(errno){
+			error(errno);
+		}
 		break;
 
 	case BXN_READ:
-		LOG_MSG("BoxOnIO: Read 0x%08x 0x%08x 0x%08x 0%08x", reg_eax, reg_ebx, reg_ecx, reg_edx);
+		dev->read(reg_eax, reg_ebx, reg_ecx, reg_edx);
+		if(errno){
+			error(errno);
+		}
 		break;
 
 	case BXN_WRITE:
-		LOG_MSG("BoxOnIO: Write 0x%08x 0x%08x 0x%08x 0%08x", reg_eax, reg_ebx, reg_ecx, reg_edx);
+		dev->write(reg_eax, reg_ebx, reg_ecx, reg_edx);
+		if(errno){
+			error(errno);
+		}
 		break;
 
 	default:{
-		LOG_MSG("BoxOnIO: Unknown service 0x%08x", reg_eax);
-		reg_eax = -ENOSYS;
-		CALLBACK_SCF(true);
+		if(reg_eax < BXN_IOCTL || reg_eax >= BXN_IO_RESERVED){
+			LOG_MSG("BoxOnIO: Unknown service 0x%08x", reg_eax);
+			reg_eax = -ENOSYS;
+			CALLBACK_SCF(true);
+		}
+		dev->ioctl(reg_eax, reg_ebx, reg_ecx, reg_edx);
+		if(errno){
+			error(errno);
+		}
 	}};
 
+	return CBRET_NONE;
+
+Error:
+	CALLBACK_SCF(true);
+	reg_eax = -errno;
 	return CBRET_NONE;
 }
 
