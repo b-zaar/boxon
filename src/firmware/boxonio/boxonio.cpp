@@ -76,11 +76,10 @@ static Bitu bxnIOSys(void)
 
 	// Clear errors
 	errno = 0;
-	CALLBACK_SCF(false);
+	//CALLBACK_SCF(false);
 
 	// Find device
-	dev = getDeviceControl(reg_ebx);
-	if(errno){
+	if((dev = getDeviceControl(reg_ebx)) == NULL){
 		error(errno);
 	}
 
@@ -89,48 +88,31 @@ static Bitu bxnIOSys(void)
 
 	case BXN_OPEN:
 		dev->open(reg_eax, reg_ebx, reg_ecx, reg_edx);
-		if(errno){
-			error(errno);
-		}
 		break;
 
 	case BXN_CLOSE:
 		dev->close(reg_eax, reg_ebx, reg_ecx, reg_edx);
-		if(errno){
-			error(errno);
-		}
 		break;
 
 	case BXN_READ:
 		dev->read(reg_eax, reg_ebx, reg_ecx, reg_edx);
-		if(errno){
-			error(errno);
-		}
 		break;
 
 	case BXN_WRITE:
 		dev->write(reg_eax, reg_ebx, reg_ecx, reg_edx);
-		if(errno){
-			error(errno);
-		}
 		break;
 
 	default:{
 		if(reg_eax < BXN_IOCTL || reg_eax >= BXN_IO_RESERVED){
-			LOG_MSG("BoxOnIO: Unknown service 0x%08x", reg_eax);
-			reg_eax = -ENOSYS;
-			CALLBACK_SCF(true);
+			error(ENOSYS);
 		}
 		dev->ioctl(reg_eax, reg_ebx, reg_ecx, reg_edx);
-		if(errno){
-			error(errno);
-		}
 	}};
 
 	return CBRET_NONE;
 
 Error:
-	CALLBACK_SCF(true);
+	//CALLBACK_SCF(true);
 	reg_eax = -errno;
 	return CBRET_NONE;
 }
