@@ -21,37 +21,24 @@
 #include "firmware.h"
 
 #define	BLOCK_SZ	512
-#define	IMAGE_CNT	4
+#define	ATA_LIST_MAX	4
 
-extern imageDisk *imageDiskList[IMAGE_CNT];
+#define AtaDevice	imageDisk
+#define	ataDevList	imageDiskList
 
-static int open(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &ptr);
-static int close(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &ptr);
-static int read(uint32_t &code, uint32_t &id, uint32_t &cnt, uint32_t &ptr);
-static int write(uint32_t &code, uint32_t &id, uint32_t &cnt, uint32_t &ptr);
-static int ioctl(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &ptr);
+extern AtaDevice *ataDevList[ATA_LIST_MAX];
 
-static DeviceControl ataDev={
-	open,
-	close,
-	read,
-	write,
-	ioctl
-};
-
-DeviceControl *devAtaInit()
+/*
+ * Get the ATA device
+ */
+static AtaDevice *getAtaDevice(int id)
 {
-	return &ataDev;
-}
-
-static imageDisk *getDiskImage(int drv)
-{
-	drv = DEV_ID(drv);
-	if(drv >= 4 || imageDiskList[drv] == NULL){
+	id = DEV_ID(id);
+	if(id >= 4 || ataDevList[id] == NULL){
 		error(ENODEV);
 	}
 
-	return imageDiskList[drv];
+	return ataDevList[id];
 Error:
 	return NULL;
 }
@@ -59,29 +46,36 @@ Error:
 /*
  * Open ATA device
  */
-static int open(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &ptr)
+static int ataOpen(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &ptr)
 {
-	code = 0;
+	AtaDevice *ata;
+
+	if((ata = getAtaDevice(id)) == NULL){
+		error(ENODEV);
+	}
+
 	return 0;
+Error:
+	code = -errno;
+	return -1;
 }
 
 /*
  * Close ATA device
  */
-static int close(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &ptr)
+static int ataClose(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &ptr)
 {
-	code = 0;
 	return 0;
 }
 
 /*
  * Read ATA device
  */
-static int read(uint32_t &code, uint32_t &id, uint32_t &cnt, uint32_t &ptr)
+static int ataRead(uint32_t &code, uint32_t &id, uint32_t &cnt, uint32_t &ptr)
 {
 	int i;
 	char *rwBuf;
-	imageDisk *img;
+	AtaDevice *ata;
 	uint32_t pos, buf;
 
 	buf = boxReadD(ptr);
@@ -99,32 +93,33 @@ static int read(uint32_t &code, uint32_t &id, uint32_t &cnt, uint32_t &ptr)
 	}
 
 	// Find the mounted image
-	if((img = getDiskImage(id)) == NULL){
+	if((ata = getAtaDevice(id)) == NULL){
 		error(errno);
 	}
 
 	// Read blocks
 	rwBuf = new char[BLOCK_SZ];
 	for(i = 0; i < cnt; i += BLOCK_SZ, buf += BLOCK_SZ, pos += BLOCK_SZ){
-		if(img->Read_AbsoluteSector(pos, rwBuf) < 0){
+		if(ata->Read_AbsoluteSector(pos, rwBuf) < 0){
 			error(errno);
 		}
 		boxMemcpy(buf, rwBuf, BLOCK_SZ);
 	}
-	return cnt;
 
+	return cnt;
 Error:
+	code = -errno;
 	return -1;
 }
 
 /*
  * Write ATA Device
  */
-static int write(uint32_t &code, uint32_t &id, uint32_t &cnt, uint32_t &ptr)
+static int ataWrite(uint32_t &code, uint32_t &id, uint32_t &cnt, uint32_t &ptr)
 {
 	int i;
 	char *rwBuf;
-	imageDisk *img;
+	AtaDevice *ata;
 	uint32_t pos, buf;
 
 	buf = boxReadD(ptr);
@@ -142,7 +137,7 @@ static int write(uint32_t &code, uint32_t &id, uint32_t &cnt, uint32_t &ptr)
 	}
 
 	// Find the mounted image
-	if((img = getDiskImage(id)) == NULL){
+	if((ata = getAtaDevice(id)) == NULL){
 		error(errno);
 	}
 
@@ -150,21 +145,42 @@ static int write(uint32_t &code, uint32_t &id, uint32_t &cnt, uint32_t &ptr)
 	rwBuf = new char[BLOCK_SZ];
 	for(i = 0; i < cnt; i += BLOCK_SZ, buf += BLOCK_SZ, pos += BLOCK_SZ){
 		boxMemcpy(rwBuf, buf, BLOCK_SZ);
-		if(img->Write_AbsoluteSector(pos, rwBuf) < 0){
+		if(ata->Write_AbsoluteSector(pos, rwBuf) < 0){
 			error(errno);
 		}
 	}
-	return cnt;
 
+	return cnt;
 Error:
+	code = -errno;
 	return -1;
 }
 
 /*
  * IO control for ATA device
  */
-static int ioctl(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &ptr)
+static int ataIoctl(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &ptr)
 {
-	code = -ENOSYS;
-	return -ENOSYS;
+	error(ENOSYS);
+
+	return 0;
+Error:
+	code = -errno;
+	return -1;
+}
+
+static DeviceControl ataDev={
+	ataOpen,
+	ataClose,
+	ataRead,
+	ataWrite,
+	ataIoctl
+};
+
+/*
+ * Init the ATA device
+ */
+DeviceControl *ataDevInit()
+{
+	return &ataDev;
 }

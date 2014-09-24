@@ -21,7 +21,7 @@
 #define DEV_TYPE(dev)	(dev >> 16)
 
 enum DeviceTypes {
-	DEV_TYPE_STORAGE = 0x13,
+	DEV_TYPE_ATA = 0x13,
 
 	DEV_TYPE_MAX = 0xFF
 };

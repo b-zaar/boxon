@@ -20,8 +20,8 @@
 #include "bxndevice.h"
 #include "firmware.h"
 
-// Hardware list
-DeviceControl *devAtaInit();
+// Device init list
+DeviceControl *ataDevInit();
 
 static DeviceControl *devTable[DEV_TYPE_MAX];
 
@@ -30,7 +30,7 @@ static DeviceControl *devTable[DEV_TYPE_MAX];
  */
 void bxnDeviceInit(void)
 {
-	devTable[0x13] = devAtaInit();
+	devTable[DEV_TYPE_ATA] = ataDevInit();
 }
 
 /*
@@ -53,7 +53,6 @@ DeviceControl *getDeviceControl(unsigned int devId)
 	}
 
 	return devCtl;
-
 Error:
 	return NULL;
 }
