@@ -23,6 +23,9 @@
 
 #define	FB_LIST_MAX	1
 
+// Frame buffer init list;
+FbDevice *bxnfbInit();
+
 static FbDevice *fbDevList[FB_LIST_MAX];
 
 /*
@@ -43,7 +46,7 @@ Error:
 /*
  * Open frame buffer device
  */
-static int fbOpen(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &ptr)
+static int fbOpen(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &data)
 {
 	FbDevice *fb;
 
@@ -51,7 +54,7 @@ static int fbOpen(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &ptr)
 		error(ENODEV);
 	}
 
-	return 0;
+	return fb->open(code, id, flags, data);
 Error:
 	code = -errno;
 	return -1;
@@ -60,19 +63,32 @@ Error:
 /*
  * Close frame buffer device
  */
-static int fbClose(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &ptr)
+static int fbClose(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &data)
 {
-	return 0;
+	FbDevice *fb;
+
+	if((fb = getFbDevice(id)) == NULL){
+		error(ENODEV);
+	}
+
+	return fb->close(code, id, flags, data);
+Error:
+	code = -errno;
+	return -1;
 }
 
 /*
  * Read frame buffer device
  */
-static int fbRead(uint32_t &code, uint32_t &id, uint32_t &cnt, uint32_t &ptr)
+static int fbRead(uint32_t &code, uint32_t &id, uint32_t &cnt, uint32_t &data)
 {
-	error(EIO);
+	FbDevice *fb;
 
-	return cnt;
+	if((fb = getFbDevice(id)) == NULL){
+		error(ENODEV);
+	}
+
+	return fb->read(code, id, cnt, data);
 Error:
 	code = -errno;
 	return -1;
@@ -81,11 +97,15 @@ Error:
 /*
  * Write frame buffer Device
  */
-static int fbWrite(uint32_t &code, uint32_t &id, uint32_t &cnt, uint32_t &ptr)
+static int fbWrite(uint32_t &code, uint32_t &id, uint32_t &cnt, uint32_t &data)
 {
-	error(EIO);
+	FbDevice *fb;
 
-	return cnt;
+	if((fb = getFbDevice(id)) == NULL){
+		error(ENODEV);
+	}
+
+	return fb->write(code, id, cnt, data);
 Error:
 	code = -errno;
 	return -1;
@@ -94,11 +114,15 @@ Error:
 /*
  * IO control for frame buffer device
  */
-static int fbIoctl(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &ptr)
+static int fbIoctl(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &data)
 {
-	error(ENOSYS);
+	FbDevice *fb;
 
-	return 0;
+	if((fb = getFbDevice(id)) == NULL){
+		error(ENODEV);
+	}
+
+	return fb->ioctl(code, id, flags, data);
 Error:
 	code = -errno;
 	return -1;
@@ -117,5 +141,6 @@ static DeviceControl fbDev={
  */
 DeviceControl *fbDevInit()
 {
+	fbDevList[0] = bxnfbInit();
 	return &fbDev;
 }
