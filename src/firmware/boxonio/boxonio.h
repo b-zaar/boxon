@@ -39,6 +39,7 @@ enum BoxOnIOServices {
 
 	BXN_IOCTL 		= 0x100000,
 	BXN_SET_MODE		= BXN_IOCTL,
+	BXN_GET_INFO,
 
 	BXN_IO_RESERVED 	= 0x80000000
 };

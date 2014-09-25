@@ -21,6 +21,8 @@
 
 #define FB_FLAGS_MASK	0x000001ff
 
+#define	FB_INFO_BLOCK	0x00001fff
+
 struct FbMode{
 	uint32_t	id;
 	uint32_t	gfxResX;

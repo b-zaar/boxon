@@ -30,4 +30,7 @@
 #define FB_TEXT		0x00000000
 #define FB_GFX		0x00000100
 
+// Frame buffer information blocks
+#define	FB_INFO		0x00001000
+
 #endif	// _FBDEV_H

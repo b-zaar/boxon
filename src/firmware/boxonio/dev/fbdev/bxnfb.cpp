@@ -158,6 +158,65 @@ Error:
 }
 
 /*
+ * Get the current mode
+ */
+static FbMode *getCurMode()
+{
+	uint16_t mId;
+	FbMode *mode;
+
+	// Find the current mode
+	mode = NULL;
+	VESA_GetSVGAMode(mId);
+	for(mode = modeList; mode->id != 0xffff; mode++){
+		if(mode->id == (mId & 0xfff)){
+			break;
+		}
+	}
+	return mode;
+}
+
+/*
+ * Get frame buffer info
+ */
+static int bxnfbGetInfo(uint32_t &code, uint32_t id, uint32_t &flags, uint32_t &data)
+{
+	FbMode *mode;
+
+	// Return the current mode
+	if(flags == 0 && data == 0){
+		int resX, resY;
+
+		// Get the current mode
+		if((mode = getCurMode()) == NULL){
+			error(EIO);
+		}
+
+		// Set the mode values
+		flags = mode->flags;
+		if(flags & FB_GFX){
+			data = mode->gfxResX << 16 | mode->gfxResY;
+		}else{
+			data = mode->textResX << 16 | mode->textResY;
+		}
+
+	// Return an info block
+	}else{
+		switch(flags & FB_INFO_BLOCK){
+
+		// Unknown info block request
+		default:{
+			error(EIO);
+		}};
+	}
+
+	return 0;
+Error:
+	code = -errno;
+	return -1;
+}
+
+/*
  * BoxOn frame buffer open
  */
 static int32_t bxnfbOpen(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &data)
@@ -215,6 +274,9 @@ static int32_t bxnfbIoctl(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_
 
 	case BXN_SET_MODE:
 		return bxnfbSetMode(code, id, flags, data);
+
+	case BXN_GET_INFO:
+		return bxnfbGetInfo(code, id, flags, data);
 
 	default:{
 		error(ENOSYS)
