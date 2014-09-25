@@ -93,6 +93,14 @@
 #define VGAMEM_CTEXT 0xB800
 #define VGAMEM_MTEXT 0xB000
 
+// VESA return codes
+#define VESA_SUCCESS          0x00
+#define VESA_FAIL             0x01
+#define VESA_HW_UNSUPPORTED   0x02
+#define VESA_MODE_UNSUPPORTED 0x03
+// internal definition to pass to the caller
+#define VESA_UNIMPLEMENTED    0xFF
+
 #define BIOS_NCOLS Bit16u ncols=real_readw(BIOSMEM_SEG,BIOSMEM_NB_COLS);
 #define BIOS_NROWS Bit16u nrows=(Bit16u)real_readb(BIOSMEM_SEG,BIOSMEM_NB_ROWS)+1;
 
@@ -111,7 +119,7 @@ struct VideoModeBlock {
 	Bitu	htotal,vtotal;
 	Bitu	hdispend,vdispend;
 	Bitu	special;
-	
+
 };
 extern VideoModeBlock ModeList_VGA[];
 extern VideoModeBlock * CurMode;

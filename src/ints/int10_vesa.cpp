@@ -28,13 +28,6 @@
 #include "int10.h"
 #include "dos_inc.h"
 
-#define VESA_SUCCESS          0x00
-#define VESA_FAIL             0x01
-#define VESA_HW_UNSUPPORTED   0x02
-#define VESA_MODE_UNSUPPORTED 0x03
-// internal definition to pass to the caller
-#define VESA_UNIMPLEMENTED    0xFF
-
 static struct {
 	Bitu setwindow;
 	Bitu pmStart;
