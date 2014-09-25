@@ -15,6 +15,7 @@
  */
 
 #include <errno.h>
+
 #include "bios_disk.h"
 #include "boxon.h"
 #include "bxndevice.h"

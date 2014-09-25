@@ -22,6 +22,7 @@
 
 // Device init list
 DeviceControl *ataDevInit();
+DeviceControl *fbDevInit();
 
 static DeviceControl *devTable[DEV_TYPE_MAX];
 
@@ -31,6 +32,7 @@ static DeviceControl *devTable[DEV_TYPE_MAX];
 void bxnDeviceInit(void)
 {
 	devTable[DEV_TYPE_ATA] = ataDevInit();
+	devTable[DEV_TYPE_FBDEV] = fbDevInit();
 }
 
 /*

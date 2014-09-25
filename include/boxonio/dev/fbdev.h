@@ -14,27 +14,20 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	_BXN_DEVICE_H
-#define	_BXN_DEVICE_H
+#ifndef _FBDEV_H
+#define _FBDEV_H
 
-#define	DEV_ID(dev)	(dev & 0xffff)
-#define DEV_TYPE(dev)	(dev >> 16)
+// Bits Per Pixel
+#define FB_1BPP		0x00000001
+#define FB_2BPP		0x00000002
+#define FB_4BPP		0x00000004
+#define FB_8BPP		0x00000008
+#define FB_15BPP	0x0000000f
+#define FB_16BPP	0x00000010
+#define FB_32BPP	0x00000020
 
-enum DeviceTypes {
-	DEV_TYPE_FBDEV		= 0x10,
-	DEV_TYPE_ATA		= 0x13,
+// Text or graphics mode
+#define FB_TEXT		0x00000000
+#define FB_GFX		0x00000100
 
-	DEV_TYPE_MAX		= 0xFF
-};
-
-struct DeviceControl {
-	int (*open)(uint32_t &code, uint32_t &devId, uint32_t &flags, uint32_t &ptr);
-	int (*close)(uint32_t &code, uint32_t &devId, uint32_t &flags, uint32_t &ptr);
-	int (*read)(uint32_t &code, uint32_t &devId, uint32_t &cnt, uint32_t &ptr);
-	int (*write)(uint32_t &code, uint32_t &devId, uint32_t &cnt, uint32_t &ptr);
-	int (*ioctl)(uint32_t &code, uint32_t &devId, uint32_t &flags, uint32_t &ptr);
-};
-
-DeviceControl *getDeviceControl(uint32_t devId);
-
-#endif		// _BXN_DEVICE_H
+#endif	// _FBDEV_H

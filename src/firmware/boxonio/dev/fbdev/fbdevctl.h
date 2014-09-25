@@ -14,27 +14,28 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	_BXN_DEVICE_H
-#define	_BXN_DEVICE_H
+#ifndef _FBDEV_CTL_H
+#define _FBDEV_CTL_H
 
-#define	DEV_ID(dev)	(dev & 0xffff)
-#define DEV_TYPE(dev)	(dev >> 16)
+#include "boxonio/dev/fbdev.h"
 
-enum DeviceTypes {
-	DEV_TYPE_FBDEV		= 0x10,
-	DEV_TYPE_ATA		= 0x13,
+#define FB_FLAGS_MASK	0x000001ff
 
-	DEV_TYPE_MAX		= 0xFF
+struct FBModes{
+	uint32_t	mode;
+	uint32_t	gfxResX;
+	uint32_t	gfxResY;
+	uint32_t	textResX;
+	uint32_t	textResY;
+	uint32_t	flags;
 };
 
-struct DeviceControl {
-	int (*open)(uint32_t &code, uint32_t &devId, uint32_t &flags, uint32_t &ptr);
-	int (*close)(uint32_t &code, uint32_t &devId, uint32_t &flags, uint32_t &ptr);
-	int (*read)(uint32_t &code, uint32_t &devId, uint32_t &cnt, uint32_t &ptr);
-	int (*write)(uint32_t &code, uint32_t &devId, uint32_t &cnt, uint32_t &ptr);
-	int (*ioctl)(uint32_t &code, uint32_t &devId, uint32_t &flags, uint32_t &ptr);
+struct FbDevice{
+	int32_t	(*open)(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &data);
+	int32_t	(*close)(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &data);
+	int32_t	(*read)(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &data);
+	int32_t	(*write)(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &data);
+	int32_t (*ioctl)(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &data);
 };
 
-DeviceControl *getDeviceControl(uint32_t devId);
-
-#endif		// _BXN_DEVICE_H
+#endif	// _FBDEV_CTL_H
