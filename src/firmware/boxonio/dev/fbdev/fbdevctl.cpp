@@ -17,7 +17,7 @@
 #include <errno.h>
 
 #include "boxon.h"
-#include "bxndevice.h"
+#include "bxndevctl.h"
 #include "fbdevctl.h"
 #include "firmware.h"
 

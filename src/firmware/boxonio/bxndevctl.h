@@ -14,18 +14,10 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	_BXN_DEVICE_H
-#define	_BXN_DEVICE_H
+#ifndef	_BXN_DEVCTL_H
+#define	_BXN_DEVCTL_H
 
-#define	DEV_ID(dev)	(dev & 0xffff)
-#define DEV_TYPE(dev)	(dev >> 16)
-
-enum DeviceTypes {
-	DEV_TYPE_FBDEV		= 0x10,
-	DEV_TYPE_ATA		= 0x13,
-
-	DEV_TYPE_MAX		= 0xFF
-};
+#include "boxonio/bxndevice.h"
 
 struct DeviceControl {
 	int (*open)(uint32_t &code, uint32_t &devId, uint32_t &flags, uint32_t &ptr);

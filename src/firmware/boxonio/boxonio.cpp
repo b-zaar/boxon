@@ -17,7 +17,7 @@
 #include "boxon.h"
 #include "boxonio.h"
 #include "callback.h"
-#include "bxndevice.h"
+#include "bxndevctl.h"
 #include "firmware.h"
 
 void bxnDeviceInit(void);

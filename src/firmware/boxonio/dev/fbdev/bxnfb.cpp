@@ -20,11 +20,25 @@
 #include "boxonio.h"
 #include "fbdevctl.h"
 #include "ints/int10.h"
+#include "vga.h"
+
+static struct FbInfoDevice infoDev = {
+	// Type,	dev id,	flags
+	FB_INFO_DEVICE,	0,	0,
+	// Device string
+	"S3 Incorporated. Trio64",
+	// Vendor str
+	"BoxOn based on DOSBox",
+	// Mode cnt,	total mem
+	0,		0,
+	// lin mem sz,	lin mem base
+	0,		S3_LFB_BASE
+};
 
 /*
  * Video modes supported by the BoxOn frame buffer
  */
-struct FbMode modeList[] = {
+static struct FbMode modeList[] = {
 	// id	gx	gy	tx	ty	flags
 	{0x000,	360,	400,	40,	25,	FB_TEXT | FB_4BPP},
 	{0x001,	360,	400,	40,	25,	FB_TEXT | FB_4BPP},
@@ -169,11 +183,53 @@ static FbMode *getCurMode()
 	mode = NULL;
 	VESA_GetSVGAMode(mId);
 	for(mode = modeList; mode->id != 0xffff; mode++){
-		if(mode->id == (mId & 0xfff)){
+		if(mode->id == (mId & 0x1ff)){
 			break;
 		}
 	}
 	return mode;
+}
+
+/*
+ * Set the device info block
+ */
+static int getInfoDevice(uint32_t &code, uint32_t id, uint32_t flags, uint32_t data)
+{
+	int mc, blkSz;
+	uint32_t blkType;
+	FbMode *mode;
+
+	blkType = boxReadD(data);
+	blkSz = boxReadD(data + 4);
+
+	// Not a device info block
+	if(blkType != FB_INFO_DEVICE){
+		error(EIO);
+	}
+
+	// Not enough memory reserved
+	if(blkSz < sizeof(struct FbInfoDevice)){
+		error(EIO);
+	}
+
+	infoDev.devId = id;
+
+	// Set mode count
+	mode = modeList;
+	for(mc = 0; mode->id != 0xffff; mc++, mode++){
+		;
+	}
+	infoDev.modeCnt = mc;
+
+	infoDev.totalMemSz = vga.vmemsize;
+	infoDev.linearMemSz = vga.vmemsize;
+
+	boxMemcpy(data, &infoDev, sizeof(struct FbInfoDevice));
+
+	return 0;
+Error:
+	code = -errno;
+	return -1;
 }
 
 /*
@@ -203,6 +259,9 @@ static int bxnfbGetInfo(uint32_t &code, uint32_t id, uint32_t &flags, uint32_t &
 	// Return an info block
 	}else{
 		switch(flags & FB_INFO_BLOCK){
+
+		case FB_INFO_DEVICE:
+			return getInfoDevice(code, id, flags, data);
 
 		// Unknown info block request
 		default:{

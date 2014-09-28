@@ -17,6 +17,8 @@
 #ifndef _FBDEV_H
 #define _FBDEV_H
 
+#include "boxonio/bxndevice.h"
+
 // Bits Per Pixel
 #define FB_1BPP		0x00000001
 #define FB_2BPP		0x00000002
@@ -31,6 +33,18 @@
 #define FB_GFX		0x00000100
 
 // Frame buffer information blocks
-#define	FB_INFO		0x00001000
+#define FB_INFO		0x00001000
+#define FB_INFO_DEVICE	FB_INFO
+
+struct FbInfoDevice{
+	DEV_INFO_HEAD;
+	char devStr[80];
+	char vendorStr[80];
+	uint32_t modeCnt;
+	uint32_t totalMemSz;
+	uint32_t linearMemSz;
+	uint32_t linearMemBase;
+};
+
 
 #endif	// _FBDEV_H

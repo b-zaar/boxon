@@ -14,47 +14,25 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <errno.h>
+#ifndef	_BXN_DEVICE_H
+#define	_BXN_DEVICE_H
 
-#include "boxon.h"
-#include "bxndevctl.h"
-#include "firmware.h"
+#define	DEV_ID(dev)	(dev & 0xffff)
+#define DEV_TYPE(dev)	(dev >> 16)
 
-// Device init list
-DeviceControl *ataDevInit();
-DeviceControl *fbDevInit();
+#define DEV_INFO_HEAD \
+	uint32_t type; \
+	union{ \
+		uint32_t devId; \
+		uint32_t allocSz; \
+	}; \
+	uint32_t flags;
 
-static DeviceControl *devTable[DEV_TYPE_MAX];
+enum DeviceTypes {
+	DEV_TYPE_FBDEV		= 0x10,
+	DEV_TYPE_ATA		= 0x13,
 
-/*
- * Initialize the devices
- */
-void bxnDeviceInit(void)
-{
-	devTable[DEV_TYPE_ATA] = ataDevInit();
-	devTable[DEV_TYPE_FBDEV] = fbDevInit();
-}
+	DEV_TYPE_MAX		= 0xFF
+};
 
-/*
- * Get a device control
- */
-DeviceControl *getDeviceControl(unsigned int devId)
-{
-	unsigned int devType;
-	DeviceControl *devCtl;
-
-	devType = DEV_TYPE(devId);
-
-	if(devType > DEV_TYPE_MAX){
-		error(ENODEV);
-	}
-
-	devCtl = devTable[devType];
-	if(devCtl == NULL){
-		error(ENODEV);
-	}
-
-	return devCtl;
-Error:
-	return NULL;
-}
+#endif		// _BXN_DEVICE_H
