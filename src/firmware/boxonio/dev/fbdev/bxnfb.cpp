@@ -22,6 +22,8 @@
 #include "ints/int10.h"
 #include "vga.h"
 
+static int modeCnt;
+
 static struct FbInfoDevice infoDev = {
 	// Type,	dev id,	flags
 	FB_INFO_DEVICE,	0,	0,
@@ -38,80 +40,80 @@ static struct FbInfoDevice infoDev = {
 /*
  * Video modes supported by the BoxOn frame buffer
  */
-static struct FbMode modeList[] = {
+static struct FbModeMap modeList[] = {
 	// id	gx	gy	tx	ty	flags
-	{0x000,	360,	400,	40,	25,	FB_TEXT | FB_4BPP},
-	{0x001,	360,	400,	40,	25,	FB_TEXT | FB_4BPP},
-	{0X002,	720,	400,	80,	25,	FB_TEXT | FB_4BPP},
-	{0x003,	720,	400,	80,	25,	FB_TEXT | FB_4BPP},
-	{0x004,	320,	200,	40,	25,	FB_GFX | FB_2BPP},
-	{0x005,	320,	200,	40,	25,	FB_GFX | FB_2BPP},
-	{0x006,	640,	200,	80,	25,	FB_GFX | FB_1BPP},
-	{0x007,	720,	400,	80,	25,	FB_TEXT | FB_1BPP},
+	{0x000,	360,	400,	40,	25,	FB_TEXT | FB_4BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0x001,	360,	400,	40,	25,	FB_TEXT | FB_4BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0X002,	720,	400,	80,	25,	FB_TEXT | FB_4BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0x003,	720,	400,	80,	25,	FB_TEXT | FB_4BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0x004,	320,	200,	40,	25,	FB_GFX | FB_2BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0x005,	320,	200,	40,	25,	FB_GFX | FB_2BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0x006,	640,	200,	80,	25,	FB_GFX | FB_1BPP | FB_MEM_WINDOW},
+	{0x007,	720,	400,	80,	25,	FB_TEXT | FB_1BPP | FB_MEM_WINDOW},
 
-	{0x00D,	320,	200,	40,	25,	FB_GFX | FB_4BPP},
-	{0x00E,	640,	200,	80,	25,	FB_GFX | FB_4BPP},
-	{0x00F,	640,	350,	80,	25,	FB_GFX | FB_1BPP},
-	{0x010,	640,	350,	80,	25,	FB_GFX | FB_4BPP},
-	{0x011,	640,	480,	80,	30,	FB_GFX | FB_1BPP},
-	{0x012,	640,	480,	80,	30,	FB_GFX | FB_4BPP},
-	{0x013,	320,	200,	40,	25,	FB_GFX | FB_8BPP},
+	{0x00D,	320,	200,	40,	25,	FB_GFX | FB_4BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0x00E,	640,	200,	80,	25,	FB_GFX | FB_4BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0x00F,	640,	350,	80,	25,	FB_GFX | FB_1BPP | FB_MEM_WINDOW},
+	{0x010,	640,	350,	80,	25,	FB_GFX | FB_4BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0x011,	640,	480,	80,	30,	FB_GFX | FB_1BPP | FB_MEM_WINDOW},
+	{0x012,	640,	480,	80,	30,	FB_GFX | FB_4BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0x013,	320,	200,	40,	25,	FB_GFX | FB_8BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
 
-	{0x054,	1056,	344,	132,	43,	FB_TEXT | FB_8BPP},
-	{0x055,	1056,	400,	132,	25,	FB_TEXT | FB_8BPP},
+	{0x054,	1056,	344,	132,	43,	FB_TEXT | FB_8BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0x055,	1056,	400,	132,	25,	FB_TEXT | FB_8BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
 
-	{0x069,	640,	480,	80,	30,	FB_GFX | FB_8BPP},
-	{0x06A,	800,	600,	100,	37,	FB_GFX | FB_4BPP},
+	{0x069,	640,	480,	80,	30,	FB_GFX | FB_8BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x06A,	800,	600,	100,	37,	FB_GFX | FB_4BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
 
-	{0x100,	640,	400,	80,	25,	FB_GFX | FB_8BPP},
-	{0x101,	640,	480,	80,	30,	FB_GFX | FB_8BPP},
-	{0x102,	800,	600,	100,	37,	FB_GFX | FB_4BPP},
-	{0x103,	800,	600,	100,	37,	FB_GFX | FB_8BPP},
-	{0x104,	1024,	768,	128,	48,	FB_GFX | FB_4BPP},
-	{0x105,	1024,	768,	128,	48,	FB_GFX | FB_8BPP},
-	{0x106,	1280,	1024,	160,	64,	FB_GFX | FB_4BPP},
-	{0x107,	1280,	1024,	160,	64,	FB_GFX | FB_8BPP},
-	{0x108,	640,	480,	80,	60,	FB_TEXT | FB_8BPP},
-	{0x109,	1056,	400,	132,	25,	FB_TEXT | FB_8BPP},
-	{0x10A,	1056,	688,	132,	43,	FB_TEXT | FB_8BPP},
-	{0x10B,	1056,	400,	132,	50,	FB_TEXT | FB_8BPP},
-	{0x10C,	1056,	480,	132,	60,	FB_TEXT | FB_8BPP},
-	{0x10D,	320,	200,	40,	25,	FB_GFX | FB_15BPP},
-	{0x10E,	320,	200,	40,	25,	FB_GFX | FB_16BPP},
-	{0x10F,	320,	200,	40,	25,	FB_GFX | FB_32BPP},
-	{0x110,	640,	480,	80,	30,	FB_GFX | FB_15BPP},
-	{0x111,	640,	480,	80,	30,	FB_GFX | FB_16BPP},
-	{0x112,	640,	480,	80,	30,	FB_GFX | FB_32BPP},
-	{0x113,	800,	600,	100,	37,	FB_GFX | FB_15BPP},
-	{0x114,	800,	600,	100,	37,	FB_GFX | FB_16BPP},
-	{0x115,	800,	600,	100,	37,	FB_GFX | FB_32BPP},
-	{0x116,	1024,	768,	128,	48,	FB_GFX | FB_15BPP},
-	{0x117,	1024,	768,	128,	48,	FB_GFX | FB_16BPP},
-	{0x118,	1024,	768,	128,	48,	FB_GFX | FB_32BPP},
+	{0x100,	640,	400,	80,	25,	FB_GFX | FB_8BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x101,	640,	480,	80,	30,	FB_GFX | FB_8BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x102,	800,	600,	100,	37,	FB_GFX | FB_4BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x103,	800,	600,	100,	37,	FB_GFX | FB_8BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x104,	1024,	768,	128,	48,	FB_GFX | FB_4BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x105,	1024,	768,	128,	48,	FB_GFX | FB_8BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x106,	1280,	1024,	160,	64,	FB_GFX | FB_4BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x107,	1280,	1024,	160,	64,	FB_GFX | FB_8BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x108,	640,	480,	80,	60,	FB_TEXT | FB_8BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0x109,	1056,	400,	132,	25,	FB_TEXT | FB_8BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0x10A,	1056,	688,	132,	43,	FB_TEXT | FB_8BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0x10B,	1056,	400,	132,	50,	FB_TEXT | FB_8BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0x10C,	1056,	480,	132,	60,	FB_TEXT | FB_8BPP | FB_MEM_WINDOW | FB_MODE_COLOR},
+	{0x10D,	320,	200,	40,	25,	FB_GFX | FB_15BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x10E,	320,	200,	40,	25,	FB_GFX | FB_16BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x10F,	320,	200,	40,	25,	FB_GFX | FB_32BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x110,	640,	480,	80,	30,	FB_GFX | FB_15BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x111,	640,	480,	80,	30,	FB_GFX | FB_16BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x112,	640,	480,	80,	30,	FB_GFX | FB_32BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x113,	800,	600,	100,	37,	FB_GFX | FB_15BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x114,	800,	600,	100,	37,	FB_GFX | FB_16BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x115,	800,	600,	100,	37,	FB_GFX | FB_32BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x116,	1024,	768,	128,	48,	FB_GFX | FB_15BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x117,	1024,	768,	128,	48,	FB_GFX | FB_16BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x118,	1024,	768,	128,	48,	FB_GFX | FB_32BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
 
-	{0x150,	320,	200,	40,	25,	FB_GFX | FB_8BPP},
-	{0x151,	320,	240,	40,	30,	FB_GFX | FB_8BPP},
-	{0x152,	320,	400,	40,	50,	FB_GFX | FB_8BPP},
-	{0x153,	320,	480,	40,	60,	FB_GFX | FB_8BPP},
+	{0x150,	320,	200,	40,	25,	FB_GFX | FB_8BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x151,	320,	240,	40,	30,	FB_GFX | FB_8BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x152,	320,	400,	40,	50,	FB_GFX | FB_8BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x153,	320,	480,	40,	60,	FB_GFX | FB_8BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
 
-	{0x160,	320,	240,	40,	30,	FB_GFX | FB_15BPP},
-	{0x161,	320,	400,	40,	50,	FB_GFX | FB_15BPP},
-	{0x162,	320,	480,	40,	60,	FB_GFX | FB_15BPP},
-	{0x165,	640,	400,	80,	25,	FB_GFX | FB_15BPP},
+	{0x160,	320,	240,	40,	30,	FB_GFX | FB_15BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x161,	320,	400,	40,	50,	FB_GFX | FB_15BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x162,	320,	480,	40,	60,	FB_GFX | FB_15BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x165,	640,	400,	80,	25,	FB_GFX | FB_15BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
 
-	{0x170,	320,	240,	40,	30,	FB_GFX | FB_16BPP},
-	{0x171,	320,	400,	40,	50,	FB_GFX | FB_16BPP},
-	{0x172,	320,	480,	40,	60,	FB_GFX | FB_16BPP},
-	{0x175,	640,	400,	80,	25,	FB_GFX | FB_16BPP},
+	{0x170,	320,	240,	40,	30,	FB_GFX | FB_16BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x171,	320,	400,	40,	50,	FB_GFX | FB_16BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x172,	320,	480,	40,	60,	FB_GFX | FB_16BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x175,	640,	400,	80,	25,	FB_GFX | FB_16BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
 
-	{0x190,	320,	240,	40,	30,	FB_GFX | FB_32BPP},
-	{0x191,	320,	400,	40,	50,	FB_GFX | FB_32BPP},
-	{0x192,	320,	480,	40,	60,	FB_GFX | FB_32BPP},
+	{0x190,	320,	240,	40,	30,	FB_GFX | FB_32BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x191,	320,	400,	40,	50,	FB_GFX | FB_32BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x192,	320,	480,	40,	60,	FB_GFX | FB_32BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
 
-	{0x207,	1152,	864,	160,	64,	FB_GFX | FB_8BPP},
-	{0x209,	1152,	864,	160,	64,	FB_GFX | FB_15BPP},
-	{0x20A,	1152,	864,	160,	64,	FB_GFX | FB_16BPP},
-	{0x213,	640,	400,	80,	25,	FB_GFX | FB_32BPP},
+	{0x207,	1152,	864,	160,	64,	FB_GFX | FB_8BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x209,	1152,	864,	160,	64,	FB_GFX | FB_15BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x20A,	1152,	864,	160,	64,	FB_GFX | FB_16BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
+	{0x213,	640,	400,	80,	25,	FB_GFX | FB_32BPP | FB_MEM_WINDOW | FB_MEM_LINEAR | FB_MODE_COLOR},
 
 	// End of list
 	{0xFFFF}
@@ -123,7 +125,7 @@ static struct FbMode modeList[] = {
 static uint32_t bxnfbSetMode(uint32_t &code, uint32_t id, uint32_t flags, uint32_t data)
 {
 	int resX, resY;
-	FbMode *mode;
+	FbModeMap *mode;
 
 	// Extract settings
 	resX = data >> 16;
@@ -141,15 +143,15 @@ static uint32_t bxnfbSetMode(uint32_t &code, uint32_t id, uint32_t flags, uint32
 	// Find a compatible mode
 	for(mode = modeList; mode->id != 0xffff; mode++){
 
-		// Search for graphics modes
-		if(flags & FB_GFX){
-			if(resX == mode->gfxResX && resY == mode->gfxResY && flags == mode->flags){
-				break;
-			}
+		// Match mode against minimum requirements
+		if(flags == ((flags | FB_GFX) & mode->attr.flags)){
 
-		// Search for text modes
-		}else{
-			if(resX == mode->textResX && resY == mode->textResY && flags == mode->flags){
+			// Search for graphics modes
+			if(flags & FB_GFX && resX == mode->attr.gfxResX && resY == mode->attr.gfxResY){
+				break;
+
+			// Search for text modes
+			}else if(resX == mode->attr.textResX && resY == mode->attr.textResY){
 				break;
 			}
 		}
@@ -174,10 +176,10 @@ Error:
 /*
  * Get the current mode
  */
-static FbMode *getCurMode()
+static FbModeMap *getCurMode()
 {
 	uint16_t mId;
-	FbMode *mode;
+	FbModeMap *mode;
 
 	// Find the current mode
 	mode = NULL;
@@ -195,9 +197,9 @@ static FbMode *getCurMode()
  */
 static int getInfoDevice(uint32_t &code, uint32_t id, uint32_t flags, uint32_t data)
 {
-	int mc, blkSz;
+	int blkSz;
 	uint32_t blkType;
-	FbMode *mode;
+	FbModeMap *mode;
 
 	blkType = boxReadD(data);
 	blkSz = boxReadD(data + 4);
@@ -213,13 +215,7 @@ static int getInfoDevice(uint32_t &code, uint32_t id, uint32_t flags, uint32_t d
 	}
 
 	infoDev.devId = id;
-
-	// Set mode count
-	mode = modeList;
-	for(mc = 0; mode->id != 0xffff; mc++, mode++){
-		;
-	}
-	infoDev.modeCnt = mc;
+	infoDev.modeCnt = modeCnt;
 
 	infoDev.totalMemSz = vga.vmemsize;
 	infoDev.linearMemSz = vga.vmemsize;
@@ -233,11 +229,61 @@ Error:
 }
 
 /*
+ * Set the mode list info block
+ */
+static int getInfoModelist(uint32_t &code, uint32_t id, uint32_t flags, uint32_t data)
+{
+	int mc, blkSz, sz;
+	uint32_t blkType;
+	FbModeMap *mode;
+	FbInfoModelist *ml;
+
+	blkType = boxReadD(data);
+	blkSz = boxReadD(data + 4);
+
+	// Not a mode list info block
+	if(blkType != FB_INFO_MODELIST){
+		error(EIO);
+	}
+
+	// Not enough memory reserved
+	sz = (modeCnt - 1) * sizeof(struct FbMode) + sizeof(struct FbInfoModelist);
+	if(blkSz < sz){
+		error(EIO);
+	}
+
+	// Create mode list info block
+	mode = modeList;
+	ml = new FbInfoModelist();
+	ml->type = FB_INFO_MODELIST;
+	ml->devId = id;
+	ml->modeCnt = modeCnt;
+	ml->modeList[0] = mode->attr;
+
+	// Copy header to box
+	boxMemcpy(data, ml, sizeof(struct FbInfoModelist));
+	data += sizeof(struct FbInfoModelist);
+	delete ml;
+
+	// Copy remaining mode list entries
+	mode++;
+	for(mc = 1; mc < modeCnt; mc++, mode++){
+		boxMemcpy(data, &mode->attr, sizeof(struct FbMode));
+		data += sizeof(struct FbMode);
+	}
+
+	return 0;
+Error:
+	code = -errno;
+	return -1;
+}
+
+/*
  * Get frame buffer info
  */
 static int bxnfbGetInfo(uint32_t &code, uint32_t id, uint32_t &flags, uint32_t &data)
 {
-	FbMode *mode;
+	FbModeMap *mode;
 
 	// Return the current mode
 	if(flags == 0 && data == 0){
@@ -249,11 +295,11 @@ static int bxnfbGetInfo(uint32_t &code, uint32_t id, uint32_t &flags, uint32_t &
 		}
 
 		// Set the mode values
-		flags = mode->flags;
+		flags = mode->attr.flags;
 		if(flags & FB_GFX){
-			data = mode->gfxResX << 16 | mode->gfxResY;
+			data = mode->attr.gfxResX << 16 | mode->attr.gfxResY;
 		}else{
-			data = mode->textResX << 16 | mode->textResY;
+			data = mode->attr.textResX << 16 | mode->attr.textResY;
 		}
 
 	// Return an info block
@@ -262,6 +308,9 @@ static int bxnfbGetInfo(uint32_t &code, uint32_t id, uint32_t &flags, uint32_t &
 
 		case FB_INFO_DEVICE:
 			return getInfoDevice(code, id, flags, data);
+
+		case FB_INFO_MODELIST:
+			return getInfoModelist(code, id, flags, data);
 
 		// Unknown info block request
 		default:{
@@ -360,10 +409,18 @@ static FbDevice bxnfbDev={
  */
 FbDevice *bxnfbInit()
 {
+	FbModeMap *mode;
+
 	// Only install if the S3 card is used
 	if(svgaCard != SVGA_S3Trio){
 		LOG_MSG("BoxOn frame buffer device requires the setting: machine=svga_s3");
 		error(ENODEV);
+	}
+
+	// Set mode count
+	mode = modeList;
+	for(modeCnt = 0; mode->id != 0xffff; modeCnt++, mode++){
+		;
 	}
 
 	return &bxnfbDev;

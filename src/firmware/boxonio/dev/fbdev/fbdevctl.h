@@ -23,13 +23,9 @@
 
 #define	FB_INFO_BLOCK	0x00001fff
 
-struct FbMode{
-	uint32_t	id;
-	uint32_t	gfxResX;
-	uint32_t	gfxResY;
-	uint32_t	textResX;
-	uint32_t	textResY;
-	uint32_t	flags;
+struct FbModeMap{
+	uint32_t id;
+	struct FbMode attr;
 };
 
 struct FbDevice{
