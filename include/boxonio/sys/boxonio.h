@@ -17,9 +17,11 @@
 #ifndef	_BOXONIO_H
 #define	_BOXONIO_H
 
+#include "sys/bxndevice.h"
+
 #define BOXONIO_VERSION	0x00000001
 #define BOXONIO_MAGIC_0	MC_CONST('B', 'o', 'x', 'O')
-#define BOXONIO_MAGIC_1	MC_CONST('n', 'I', 'O', 0)
+#define BOXONIO_MAGIC_1	MC_CONST('n', 'I', 'O', ' ')
 
 #define GDT_BASE	0x1000
 #define GDT_LIMIT	0x0fff

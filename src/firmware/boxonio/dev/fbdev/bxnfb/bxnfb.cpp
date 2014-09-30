@@ -17,8 +17,9 @@
 #include <errno.h>
 
 #include "boxon.h"
-#include "boxonio.h"
-#include "fbdevctl.h"
+#include "sys/boxonio.h"
+#include "sys/dev/fbdev.h"
+
 #include "ints/int10.h"
 #include "vga.h"
 

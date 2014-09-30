@@ -18,7 +18,7 @@
 
 #include "bios_disk.h"
 #include "boxon.h"
-#include "bxndevctl.h"
+#include "sys/boxonio.h"
 #include "firmware.h"
 
 #define	BLOCK_SZ	512

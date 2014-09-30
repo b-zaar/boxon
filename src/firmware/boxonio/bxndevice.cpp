@@ -17,7 +17,7 @@
 #include <errno.h>
 
 #include "boxon.h"
-#include "bxndevctl.h"
+#include "sys/boxonio.h"
 #include "firmware.h"
 
 // Device init list
