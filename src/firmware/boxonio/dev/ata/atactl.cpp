@@ -18,7 +18,7 @@
 
 #include "bios_disk.h"
 #include "boxon.h"
-#include "sys/boxonio.h"
+#include "boxonio/sys/boxonio.h"
 #include "firmware.h"
 
 #define	BLOCK_SZ	512
@@ -50,6 +50,10 @@ Error:
 static int ataOpen(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &ptr)
 {
 	AtaDevice *ata;
+
+	if(flags != 0){
+		error(EIO);
+	}
 
 	if((ata = getAtaDevice(id)) == NULL){
 		error(ENODEV);

@@ -14,47 +14,15 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	_BOXONIO_H
-#define	_BOXONIO_H
+#ifndef	BXNIO_SYS_H
+#define	BXNIO_SYS_H
 
-#include "sys/bxndevice.h"
-
-#define BOXONIO_VERSION	0x00000001
-#define BOXONIO_MAGIC_0	MC_CONST('B', 'o', 'x', 'O')
-#define BOXONIO_MAGIC_1	MC_CONST('n', 'I', 'O', ' ')
+#include "boxonio/boxonio.h"
+#include "boxonio/sys/bxndevice.h"
 
 #define GDT_BASE	0x1000
 #define GDT_LIMIT	0x0fff
 #define IDT_BASE	0x0800
 #define IDT_LIMIT	0x07ff
 
-/*
- * BoxOn I/O System services
- */
-enum BoxOnIOServices {
-	BXN_OPEN 		= 0,
-	BXN_INIT 		= 0,
-	BXN_CLOSE 		= 1,
-	BXN_EXIT 		= 1,
-	BXN_READ,
-	BXN_WRITE,
-
-	BXN_IOCTL 		= 0x100000,
-	BXN_SET_MODE		= BXN_IOCTL,
-	BXN_GET_INFO,
-
-	BXN_IO_RESERVED 	= 0x80000000
-};
-
-/*
- * BoxOn I/O information block
- */
-struct BoxOnInfoBlock {
-	Bit32u magic[2];
-	Bit32u version;
-	Bit32u entryAddr;
-	Bit32u checksum;
-	Bit32u extensionCnt;
-};
-
-#endif		// _BXNIOSYS_H
+#endif		// BXNIO_SYS_H

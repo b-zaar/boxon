@@ -14,8 +14,8 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _FBDEV_H
-#define _FBDEV_H
+#ifndef BXNIO_FBDEV_H
+#define BXNIO_FBDEV_H
 
 #include "boxonio/bxndevice.h"
 
@@ -60,6 +60,12 @@
 			(0x001 | FB_INFO)
 
 /*
+ * Frame buffer custom I/O services
+ */
+#define BXNIO_FBDEV_CURSOR_OFF \
+			(0x0001 | BXNIO_EXPERIMENT)
+
+/*
  * Fb device info block
  */
 struct FbInfoDevice{
@@ -86,10 +92,11 @@ struct FbMode{
 /*
  * Fb Mode list info
  */
-struct FbInfoModelist{
+#define FB_MODE_CNT_RESERVED	128
+struct FbInfoModeList{
 	DEV_INFO_HEAD;
 	uint32_t modeCnt;
-	struct FbMode modeList[1];
+	struct FbMode modeList[FB_MODE_CNT_RESERVED];
 };
 
-#endif	// _FBDEV_H
+#endif	// BXNIO_FBDEV_H

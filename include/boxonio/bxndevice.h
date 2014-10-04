@@ -14,8 +14,8 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	_BXN_DEVICE_H
-#define	_BXN_DEVICE_H
+#ifndef	BXNIO_DEVICE_H
+#define	BXNIO_DEVICE_H
 
 #define	DEV_ID(dev)	(dev & 0xffff)
 #define DEV_TYPE(dev)	(dev >> 16)
@@ -35,4 +35,4 @@ enum DeviceTypes {
 	DEV_TYPE_MAX		= 0xFF
 };
 
-#endif		// _BXN_DEVICE_H
+#endif		// BXNIO_DEVICE_H

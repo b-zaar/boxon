@@ -17,8 +17,8 @@
 #include <errno.h>
 
 #include "boxon.h"
-#include "sys/boxonio.h"
-#include "sys/dev/fbdev.h"
+#include "boxonio/sys/boxonio.h"
+#include "boxonio/sys/dev/fbdev.h"
 #include "firmware.h"
 
 #define	FB_LIST_MAX	1

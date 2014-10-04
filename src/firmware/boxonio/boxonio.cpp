@@ -15,7 +15,7 @@
  */
 
 #include "boxon.h"
-#include "sys/boxonio.h"
+#include "boxonio/sys/boxonio.h"
 
 #include "callback.h"
 #include "firmware.h"
@@ -52,19 +52,19 @@ void boxonIOInit(const char *rc)
  */
 static void createInfoBlock(Bit32u cbAddr)
 {
-	BoxOnInfoBlock *ib;
+	BoxOnInfoBlock *info;
 
-	ib = new BoxOnInfoBlock();
-	ib->magic[0] = BOXONIO_MAGIC_0;
-	ib->magic[1] = BOXONIO_MAGIC_1;
-	ib->version = BOXONIO_VERSION;
-	ib->entryAddr = cbAddr;
-	ib->checksum = 0 - (ib->magic[0] + ib->magic[1] + ib->version + ib->entryAddr);
+	info = new BoxOnInfoBlock();
+	info->magic[0] = BOXONIO_MAGIC_0;
+	info->magic[1] = BOXONIO_MAGIC_1;
+	info->version = BOXONIO_VERSION;
+	info->entryAddr = cbAddr;
+	info->checksum = 0 - (info->magic[0] + info->magic[1] + info->version + info->entryAddr);
 
-	boxMemcpy(FIRMWARE_INFO_BASE, ib, sizeof(BoxOnInfoBlock));
+	boxMemcpy(FIRMWARE_INFO_BASE, info, sizeof(BoxOnInfoBlock));
 	reg_esi = FIRMWARE_INFO_BASE;
 
-	delete[] ib;
+	delete[] info;
 }
 
 /*
@@ -86,24 +86,24 @@ static Bitu bxnIOSys(void)
 	// Find service
 	switch(reg_eax){
 
-	case BXN_OPEN:
+	case BXNIO_OPEN:
 		dev->open(reg_eax, reg_ebx, reg_ecx, reg_edx);
 		break;
 
-	case BXN_CLOSE:
+	case BXNIO_CLOSE:
 		dev->close(reg_eax, reg_ebx, reg_ecx, reg_edx);
 		break;
 
-	case BXN_READ:
+	case BXNIO_READ:
 		dev->read(reg_eax, reg_ebx, reg_ecx, reg_edx);
 		break;
 
-	case BXN_WRITE:
+	case BXNIO_WRITE:
 		dev->write(reg_eax, reg_ebx, reg_ecx, reg_edx);
 		break;
 
 	default:{
-		if(reg_eax < BXN_IOCTL || reg_eax >= BXN_IO_RESERVED){
+		if(reg_eax < BXNIO_CTL || reg_eax >= BXNIO_RESERVED){
 			error(ENOSYS);
 		}
 		dev->ioctl(reg_eax, reg_ebx, reg_ecx, reg_edx);

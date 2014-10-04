@@ -51,6 +51,7 @@ void SMB_Boot(const char *rc)
 	std::string modName;
 
 	INT10_SetVideoMode(0x03);
+	INT10_SetCursorShape(0x20, 0);
 	writeOut("BoxOn Simple Boot Loader\n\n");
 
 	// Load the rc file

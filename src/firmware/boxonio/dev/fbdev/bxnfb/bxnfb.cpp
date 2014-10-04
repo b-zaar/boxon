@@ -14,11 +14,12 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <cstdlib>
 #include <errno.h>
 
 #include "boxon.h"
-#include "sys/boxonio.h"
-#include "sys/dev/fbdev.h"
+#include "boxonio/sys/boxonio.h"
+#include "boxonio/sys/dev/fbdev.h"
 
 #include "ints/int10.h"
 #include "vga.h"
@@ -232,46 +233,43 @@ Error:
 /*
  * Set the mode list info block
  */
-static int getInfoModelist(uint32_t &code, uint32_t id, uint32_t flags, uint32_t data)
+static int getInfoModeList(uint32_t &code, uint32_t id, uint32_t flags, uint32_t data)
 {
 	int mc, blkSz, sz;
 	uint32_t blkType;
 	FbModeMap *mode;
-	FbInfoModelist *ml;
+	FbInfoModeList *ml;
 
 	blkType = boxReadD(data);
 	blkSz = boxReadD(data + 4);
 
-	// Not a mode list info block
+	// Check info block type
 	if(blkType != FB_INFO_MODELIST){
 		error(EIO);
 	}
 
-	// Not enough memory reserved
-	sz = (modeCnt - 1) * sizeof(struct FbMode) + sizeof(struct FbInfoModelist);
+	// Check memory reserved size
+	mc = modeCnt > FB_MODE_CNT_RESERVED ? modeCnt - FB_MODE_CNT_RESERVED : 0;
+	sz = mc * sizeof(struct FbMode) + sizeof(struct FbInfoModeList);
 	if(blkSz < sz){
 		error(EIO);
 	}
 
 	// Create mode list info block
 	mode = modeList;
-	ml = new FbInfoModelist();
+	ml = (struct FbInfoModeList *)calloc(1, sz);
 	ml->type = FB_INFO_MODELIST;
 	ml->devId = id;
 	ml->modeCnt = modeCnt;
-	ml->modeList[0] = mode->attr;
+
+	// Fill in modes
+	for(mc = 0; mc < modeCnt; mc++, mode++){
+		ml->modeList[mc] = mode->attr;
+	}
 
 	// Copy header to box
-	boxMemcpy(data, ml, sizeof(struct FbInfoModelist));
-	data += sizeof(struct FbInfoModelist);
-	delete ml;
-
-	// Copy remaining mode list entries
-	mode++;
-	for(mc = 1; mc < modeCnt; mc++, mode++){
-		boxMemcpy(data, &mode->attr, sizeof(struct FbMode));
-		data += sizeof(struct FbMode);
-	}
+	boxMemcpy(data, ml, sz);
+	free(ml);
 
 	return 0;
 Error:
@@ -311,7 +309,7 @@ static int bxnfbGetInfo(uint32_t &code, uint32_t id, uint32_t &flags, uint32_t &
 			return getInfoDevice(code, id, flags, data);
 
 		case FB_INFO_MODELIST:
-			return getInfoModelist(code, id, flags, data);
+			return getInfoModeList(code, id, flags, data);
 
 		// Unknown info block request
 		default:{
@@ -381,11 +379,16 @@ static int32_t bxnfbIoctl(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_
 {
 	switch(code){
 
-	case BXN_SET_MODE:
+	case BXNIO_SET_MODE:
 		return bxnfbSetMode(code, id, flags, data);
 
-	case BXN_GET_INFO:
+	case BXNIO_GET_INFO:
 		return bxnfbGetInfo(code, id, flags, data);
+
+	// Temp special extension
+	case BXNIO_FBDEV_CURSOR_OFF:
+		INT10_SetCursorShape(0x20, 0);
+		return 0;
 
 	default:{
 		error(ENOSYS)

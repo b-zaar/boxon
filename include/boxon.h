@@ -14,8 +14,8 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _BOXON_H
-#define _BOXON_H
+#ifndef BOXON_H
+#define BOXON_H
 
 #include <cstddef>
 #include <cstdarg>
@@ -33,7 +33,9 @@
 }
 
 // Define a  multi-character constant
+#ifndef MC_CONST
 #define MC_CONST(a, b, c, d)	((d << 24) | (c << 16) | (b << 8) | (a))
+#endif
 
 #define boxReadB(src)	mem_readb((PhysPt)(src))
 #define boxReadW(src)	mem_readw((PhysPt)(src))
@@ -60,4 +62,4 @@ int boxStrncpy(char *dest, Bit32u src, size_t cnt);
 Bit32u boxMemcpy(Bit32u dest, void *src, size_t cnt);
 void *boxMemcpy(void *dest, Bit32u src, size_t cnt);
 
-#endif		// _BOXON_H
+#endif		// BOXON_H

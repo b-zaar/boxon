@@ -14,8 +14,8 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	_BXN_DEVCTL_H
-#define	_BXN_DEVCTL_H
+#ifndef	BXNIO_SYS_DEVICE_H
+#define	BXNIO_SYS_DEVICE_H
 
 #include "boxonio/bxndevice.h"
 
@@ -29,4 +29,4 @@ struct DeviceControl {
 
 DeviceControl *getDeviceControl(uint32_t devId);
 
-#endif		// _BXN_DEVICE_H
+#endif		// BXNIO_SYS_DEVICE_H

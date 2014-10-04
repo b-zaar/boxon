@@ -14,8 +14,8 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _FBDEV_CTL_H
-#define _FBDEV_CTL_H
+#ifndef BXNIO_SYS_FBDEV_H
+#define BXNIO_SYS_FBDEV_H
 
 #include "boxonio/dev/fbdev.h"
 
@@ -36,4 +36,4 @@ struct FbDevice{
 	int32_t (*ioctl)(uint32_t &code, uint32_t &id, uint32_t &flags, uint32_t &data);
 };
 
-#endif	// _FBDEV_CTL_H
+#endif	// BXNIO_SYS_FBDEV_H

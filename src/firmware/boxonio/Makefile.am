@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/boxonio -I$(top_srcdir)/src
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src
 
 noinst_LIBRARIES = libfw_boxonio.a
 EXTRA_DIST =
