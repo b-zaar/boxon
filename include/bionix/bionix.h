@@ -14,37 +14,38 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	FIRMWARE_H
-#define	FIRMWARE_H
+#ifndef BIONIX_H
+#define BIONIX_H
 
-#include "setup.h"
+// Define a  multi-character constant
+#ifndef MC_CONST
+#define MC_CONST(a, b, c, d)	((d << 24) | (c << 16) | (b << 8) | (a))
+#endif
 
-#define FIRMWARE_INFO_BASE	0x88000
+#define BIONIX_VERSION	0x00000001
+#define BIONIX_MAGIC_0	MC_CONST('b', 'i', 'o', 'n')
+#define BIONIX_MAGIC_1	MC_CONST('i', 'x', ' ', ' ')
 
-#define	MSG_MAX_LEN		1024
-
-// Firmware module
-class FIRMWARE:public Module_base {
-public:
-	FIRMWARE(Section *sec): Module_base(sec) {};
-	const char *propString(const char *prop);
-
-private:
+/*
+ * bionix services
+ */
+enum BionixServices {
+	BIONIX_OPEN	= 0,
+	BIONIX_CLOSE,
+	BIONIX_READ,
+	BIONIX_WRITE,
+	BIONIX_IOCTL
 };
 
-// Firmware System control
-class FirmwareSystem {
-public:
-	FirmwareSystem(std::string name, void (*init)(const char *), void (*boot)(const char *)):
-		Name(name), Init(init), Boot(boot) {};
-	void init(const char *);
-	void boot(const char *);
-	std::string name();
-
-private:
-	std::string Name;
-	void (*Boot)(const char *);
-	void (*Init)(const char *);
+/*
+ * bionix I/O information block
+ */
+struct BionixInfoBlock {
+	uint32_t magic[2];
+	uint32_t version;
+	uint32_t entryAddr;
+	uint32_t checksum;
+	uint32_t extensionCnt;
 };
 
-#endif		// FIRMWARE_H
+#endif	// BIONIX_H

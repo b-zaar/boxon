@@ -21,7 +21,7 @@ void addFirmware(std::string name, void (*init)(const char *), void (*boot)(cons
 
 // Declare supported firmware
 void SMB_Boot(const char *rc);
-void boxonIOInit(const char *rc);
+void bionixInit(const char *rc);
 
 static std::list<FirmwareSystem *> fwList;
 
@@ -36,7 +36,7 @@ char **initFirmwareList()
 	std::list<FirmwareSystem *>::iterator it;
 
 	// Add firmware to support list
-	addFirmware("boxonio", &boxonIOInit, &SMB_Boot);
+	addFirmware("bionix", &bionixInit, &SMB_Boot);
 
 	// Create list of system names
 	sz = fwList.size();

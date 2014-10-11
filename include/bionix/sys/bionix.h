@@ -14,37 +14,14 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	FIRMWARE_H
-#define	FIRMWARE_H
+#ifndef	BIONIX_SYS_H
+#define	BIONIX_SYS_H
 
-#include "setup.h"
+#include "bionix/bionix.h"
 
-#define FIRMWARE_INFO_BASE	0x88000
+#define GDT_BASE	0x1000
+#define GDT_LIMIT	0x0fff
+#define IDT_BASE	0x0800
+#define IDT_LIMIT	0x07ff
 
-#define	MSG_MAX_LEN		1024
-
-// Firmware module
-class FIRMWARE:public Module_base {
-public:
-	FIRMWARE(Section *sec): Module_base(sec) {};
-	const char *propString(const char *prop);
-
-private:
-};
-
-// Firmware System control
-class FirmwareSystem {
-public:
-	FirmwareSystem(std::string name, void (*init)(const char *), void (*boot)(const char *)):
-		Name(name), Init(init), Boot(boot) {};
-	void init(const char *);
-	void boot(const char *);
-	std::string name();
-
-private:
-	std::string Name;
-	void (*Boot)(const char *);
-	void (*Init)(const char *);
-};
-
-#endif		// FIRMWARE_H
+#endif	// BIONIX_SYS_H
